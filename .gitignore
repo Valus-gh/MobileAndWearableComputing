@@ -1,3 +1,10 @@
+# Ides
+.idea
+.vscode
+.fleet
+
+
+
 # Built application files
 *.apk
 *.aar
@@ -83,3 +90,6 @@ lint/generated/
 lint/outputs/
 lint/tmp/
 # lint/reports/
+
+# MacOS
+.DS_Store
