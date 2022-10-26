@@ -54,12 +54,9 @@ public class HomeFragment extends Fragment {
 
         this.stepsCountTextView = root.findViewById(R.id.stepsCount);
         this.stepsCountProgressBar = root.findViewById(R.id.progressBar);
-        this.sensorManager = (SensorManager) getActivity().getSystemService(SENSOR_SERVICE);
-        this.listener = new StepCounterListener(this.stepsCountTextView);
+        this.listener = new StepCounterListener(this.stepsCountTextView, this.stepsCountProgressBar);
 
-        this.stepsCountProgressBar.setIndeterminate(false);
-        this.stepsCountProgressBar.setProgress(0);
-        this.stepsCountProgressBar.setMax(100);
+        this.sensorManager = (SensorManager) getActivity().getSystemService(SENSOR_SERVICE);
 
         // Toggle group button
         materialButtonToggleGroup = (MaterialButtonToggleGroup) root.findViewById(R.id.toggleButtonGroup);
@@ -117,9 +114,11 @@ class StepCounterListener implements SensorEventListener {
 
     // TextView
     TextView stepsCountTextView;
+    ProgressBar stepsCountProgressBar;
 
-    public StepCounterListener(TextView progressText) {
+    public StepCounterListener(TextView progressText, ProgressBar progressBar) {
         this.stepsCountTextView = progressText;
+        this.stepsCountProgressBar = progressBar;
     }
 
     @Override
@@ -217,6 +216,7 @@ class StepCounterListener implements SensorEventListener {
                     Log.i("ACC STEPS: ", String.valueOf(mACCStepCounter));
 
                     stepsCountTextView.setText(String.valueOf(mACCStepCounter));
+                    stepsCountProgressBar.setProgress(mACCStepCounter);
                 }
             }
         }
