@@ -1,6 +1,7 @@
 package com.example.stepapp;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -9,6 +10,7 @@ import android.view.Menu;
 import android.widget.CompoundButton;
 import android.widget.Toast;
 
+import com.example.stepapp.service.StepCountService;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -29,11 +31,12 @@ public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration mAppBarConfiguration;
     private static final int REQUEST_ACTIVITY_RECOGNITION_PERMISSION = 45;
-    private boolean runningQOrLater =
+    private final boolean runningQOrLater =
             android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -52,12 +55,22 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
 
+        // Start step-counting BG service
+        if(!StepCountService.RUNNING) StepCountService.startStepCountingService(this);
+
         // Ask for activity recognition permission
         if (runningQOrLater) {
             getActivity();
         }
 
+    }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        // Stop step-counting BG service
+        if(StepCountService.RUNNING) StepCountService.stopStepCountingService(this);
 
     }
 
@@ -103,4 +116,5 @@ public class MainActivity extends AppCompatActivity {
                 }
         }
     }
+
 }
