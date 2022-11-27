@@ -2,8 +2,8 @@
     <string name="app_name">StepApp</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="nav_header_title">Android Studio</string>
-    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_title">Walkout Companion</string>
+    <string name="nav_header_subtitle">companion@walkout.com</string>
     <string name="nav_header_desc">Navigation header</string>
     <string name="action_settings">Settings</string>
 
@@ -19,6 +19,12 @@
     <string name="step_permission_denied">permission denied</string>
     <string name="acc_not_available">ACC not available</string>
     <string name="step_not_available">step detector not available</string>
+    <string name="loginButtonText">Login</string>
+    <string name="registerButtonText">Register</string>
+    <string name="orText">or</string>
+    <string name="LoginScreenTitle">Login to Walkout Companion</string>
+    <string name="emailLabel">Email</string>
+    <string name="passwordLabel">Password</string>
 
 </resources>
 
