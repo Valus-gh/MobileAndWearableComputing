@@ -43,8 +43,8 @@ public class HomeFragment extends Fragment {
         @Override
         public void run() {
             if(StepCountService.RUNNING){
-                stepsCountTextView.setText(String.valueOf(StepCountService.dailySteps));
-                stepsCountProgressBar.setProgress(StepCountService.dailySteps);
+                stepsCountTextView.setText(String.valueOf(StepCountService.dailySteps.getSteps()));
+                stepsCountProgressBar.setProgress(StepCountService.dailySteps.getSteps());
             }
             updateHandler.postDelayed(this, 1000);
         }

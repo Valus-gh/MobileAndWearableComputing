@@ -16,6 +16,7 @@ import com.example.stepapp.api.model.CredentialsDto;
 import com.example.stepapp.api.model.TokenDto;
 import com.example.stepapp.api.requests.AuthenticatedJsonRequest;
 import com.example.stepapp.api.requests.AuthenticatedStringRequest;
+import com.example.stepapp.persistence.model.User;
 import com.google.gson.Gson;
 
 import org.json.JSONException;
@@ -32,6 +33,8 @@ public class ApiService {
     private final RequestQueue queue;
     private boolean logged = false;
     private String accessToken;
+
+    private User loggedUser;
 
     private ApiService(Context ctx) {
         queue = Volley.newRequestQueue(ctx);
@@ -63,6 +66,9 @@ public class ApiService {
 
                         // execute callback
                         onLogged.accept(tokenDto);
+
+                        loggedUser = new User(credentials.getUsername());
+
                     },
                     error -> {
                         // execute error callback
@@ -102,6 +108,10 @@ public class ApiService {
                 });
 
         queue.add(r);
+    }
+
+    public User getLoggedUser() {
+        return loggedUser;
     }
 
     public boolean isLogged() {

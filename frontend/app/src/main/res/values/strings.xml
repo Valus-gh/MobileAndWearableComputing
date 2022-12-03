@@ -25,6 +25,8 @@
     <string name="LoginScreenTitle">Login to Walkout Companion</string>
     <string name="emailLabel">Email</string>
     <string name="passwordLabel">Password</string>
+    <string name="dailyStepsLabel">Today\'s Steps:</string>
+    <string name="averageStepsLabel">Average Steps over the last 30 Days:</string>
 
 </resources>
 

@@ -8,24 +8,27 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.icu.util.ULocale;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.util.Log;
-import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
-import com.example.stepapp.R;
+import com.example.stepapp.persistence.DailyStepsLocalDaoService;
+import com.example.stepapp.persistence.model.DailySteps;
 
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Objects;
 import java.util.TimeZone;
 
 public class StepCountService extends Service {
 
     public static boolean RUNNING;
-    public static int dailySteps;
-    public static String day;
+    public static DailySteps dailySteps;
+
+    public static DailyStepsLocalDaoService localService;
 
     public Sensor stepDetector;
     public SensorManager manager;
@@ -33,7 +36,7 @@ public class StepCountService extends Service {
 
     static{
         RUNNING = false;
-        dailySteps = 0;
+        dailySteps = new DailySteps();
     }
 
     @Nullable
@@ -45,12 +48,22 @@ public class StepCountService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        //TODO Fetch step count and current day, if available
+        //TODO Fetch step count and current day, if available - preferably remotely
 
+        @SuppressLint("SimpleDateFormat")
+        SimpleDateFormat jdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
+        jdf.setTimeZone(TimeZone.getTimeZone("GMT+2"));
+        String date = jdf.format(new Date());
+        String day = date.substring(0,10);
+
+        dailySteps = localService.get(getApplicationContext(), day);
+
+        if(dailySteps == null)
+            dailySteps = new DailySteps();
 
         manager = (SensorManager) getApplicationContext().getSystemService(Context.SENSOR_SERVICE);
         stepDetector = manager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
-        stepCounterListener = new StepCounterListener();
+        stepCounterListener = new StepCounterListener(getApplicationContext());
 
         manager.registerListener(stepCounterListener, stepDetector, SensorManager.SENSOR_DELAY_NORMAL);
 
@@ -61,6 +74,7 @@ public class StepCountService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        localService = new DailyStepsLocalDaoService(getApplicationContext());
     }
 
     @Override
@@ -68,6 +82,8 @@ public class StepCountService extends Service {
         super.onDestroy();
 
         //TODO Save steps onto DB
+
+        localService.update(getApplicationContext(), dailySteps);
 
         // Unregister sensor listeners
         manager.unregisterListener(stepCounterListener);
@@ -93,10 +109,12 @@ public class StepCountService extends Service {
 // Sensor event listener
 class StepCounterListener implements SensorEventListener {
 
+    public Context context;
     public String timestamp;
     public String day;
 
-    public StepCounterListener(){
+    public StepCounterListener(Context context){
+        this.context = context;
     }
 
     @Override
@@ -117,8 +135,6 @@ class StepCounterListener implements SensorEventListener {
             timestamp = date;
             day = date.substring(0,10);
 
-            Log.d("BRUH", "sensor changed");
-
             countSteps(event.values[0], day);
 
         }
@@ -132,17 +148,24 @@ class StepCounterListener implements SensorEventListener {
     // Calculate the number of steps from the step detector
     private void countSteps(float step, String day) {
 
-        //Step count
-        StepCountService.dailySteps += (int) step;
-        Log.d("DAILY STEPS UPDATE", "Steps: " + StepCountService.dailySteps);
+        String old = StepCountService.dailySteps.day;
+        StepCountService.dailySteps.setDay(day);
 
         // If new day, update database
-        if(!Objects.equals(day, StepCountService.day)) {
+        if(!Objects.equals(day, old)) {
+
             //TODO update database, new day
+            StepCountService.dailySteps.steps = (int) step;
+            StepCountService.localService.insert(context, StepCountService.dailySteps);
+
+        }else {
+
+            StepCountService.dailySteps.setSteps(StepCountService.dailySteps.getSteps() + (int) step);
+            StepCountService.localService.update(context, StepCountService.dailySteps);
+
         }
 
-        // Update current day
-        StepCountService.day = day;
+        Log.d("DAILY STEPS UPDATE", "Steps: " + StepCountService.dailySteps);
 
     }
 

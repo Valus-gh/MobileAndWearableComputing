@@ -5,12 +5,15 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Menu;
 import android.widget.CompoundButton;
 import android.widget.Toast;
 
 import com.example.stepapp.service.StepCountService;
+import com.example.stepapp.ui.home.HomeFragment;
+import com.example.stepapp.ui.report.ReportFragment;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -19,6 +22,8 @@ import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -28,6 +33,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 public class MainActivity extends AppCompatActivity {
+
+    private DrawerLayout drawer;
+    private NavigationView navigationView;
 
     private AppBarConfiguration mAppBarConfiguration;
     private static final int REQUEST_ACTIVITY_RECOGNITION_PERMISSION = 45;
@@ -42,18 +50,20 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        NavigationView navigationView = findViewById(R.id.nav_view);
+        drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        navigationView = (NavigationView) findViewById(R.id.nav_view);
 
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow)
+                R.id.nav_home, R.id.nav_report, R.id.nav_slideshow)
                 .setDrawerLayout(drawer)
                 .build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
+
+        setupDrawerContent(navigationView);
 
         // Start step-counting BG service
         if(!StepCountService.RUNNING) StepCountService.startStepCountingService(this);
@@ -63,6 +73,56 @@ public class MainActivity extends AppCompatActivity {
             getActivity();
         }
 
+    }
+
+    private void setupDrawerContent(NavigationView navigationView) {
+        navigationView.setNavigationItemSelectedListener(
+                new NavigationView.OnNavigationItemSelectedListener() {
+                    @Override
+                    public boolean onNavigationItemSelected(MenuItem menuItem) {
+                        selectDrawerItem(menuItem);
+                        return true;
+                    }
+                });
+    }
+
+    public void selectDrawerItem(MenuItem menuItem) {
+        // Create a new fragment and specify the fragment to show based on nav item clicked
+        Fragment fragment = null;
+        Class fragmentClass;
+        switch(menuItem.getItemId()) {
+            case R.id.nav_home:
+                fragmentClass = HomeFragment.class;
+                if (getSupportActionBar() != null) {
+                    getSupportActionBar().setTitle("Steps");
+                }
+                break;
+            case R.id.nav_report:
+                fragmentClass = ReportFragment.class;
+                if (getSupportActionBar() != null) {
+                    getSupportActionBar().setTitle("Report");
+                }
+                break;
+            default:
+                fragmentClass = HomeFragment.class;
+        }
+
+        try {
+            fragment = (Fragment) fragmentClass.newInstance();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Insert the fragment by replacing any existing fragment
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        fragmentManager.beginTransaction().replace(R.id.nav_host_fragment, fragment).commit();
+
+        // Highlight the selected item has been done by NavigationView
+        menuItem.setChecked(true);
+        // Set action bar title
+        setTitle(menuItem.getTitle());
+        // Close the navigation drawer
+        drawer.closeDrawers();
     }
 
     @Override
@@ -89,8 +149,6 @@ public class MainActivity extends AppCompatActivity {
                 || super.onSupportNavigateUp();
     }
 
-
-
     // Ask for permission
     private void getActivity() {
         if (ActivityCompat.checkSelfPermission(MainActivity.this,
@@ -102,6 +160,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             return;        }
     }
+
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions, @NonNull int[] grantResults) {
