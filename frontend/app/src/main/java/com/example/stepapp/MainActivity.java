@@ -1,24 +1,17 @@
 package com.example.stepapp;
 
 import android.Manifest;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.Menu;
-import android.widget.CompoundButton;
 import android.widget.Toast;
 
 import com.example.stepapp.service.StepCountService;
 import com.example.stepapp.ui.home.HomeFragment;
 import com.example.stepapp.ui.report.ReportFragment;
-import com.google.android.material.button.MaterialButtonToggleGroup;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
-import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -56,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_home, R.id.nav_report, R.id.nav_slideshow)
+                R.id.nav_steps_item, R.id.nav_report, R.id.nav_profile_item)
                 .setDrawerLayout(drawer)
                 .build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
@@ -77,12 +70,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupDrawerContent(NavigationView navigationView) {
         navigationView.setNavigationItemSelectedListener(
-                new NavigationView.OnNavigationItemSelectedListener() {
-                    @Override
-                    public boolean onNavigationItemSelected(MenuItem menuItem) {
-                        selectDrawerItem(menuItem);
-                        return true;
-                    }
+                menuItem -> {
+                    selectDrawerItem(menuItem);
+                    return true;
                 });
     }
 
@@ -91,13 +81,13 @@ public class MainActivity extends AppCompatActivity {
         Fragment fragment = null;
         Class fragmentClass;
         switch(menuItem.getItemId()) {
-            case R.id.nav_home:
+            case R.id.nav_profile_item:
                 fragmentClass = HomeFragment.class;
                 if (getSupportActionBar() != null) {
                     getSupportActionBar().setTitle("Steps");
                 }
                 break;
-            case R.id.nav_report:
+            case R.id.nav_report_item:
                 fragmentClass = ReportFragment.class;
                 if (getSupportActionBar() != null) {
                     getSupportActionBar().setTitle("Report");
@@ -157,8 +147,7 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, new String[]
                             {Manifest.permission.ACTIVITY_RECOGNITION},
                     REQUEST_ACTIVITY_RECOGNITION_PERMISSION);
-        } else {
-            return;        }
+        }
     }
 
     @Override
