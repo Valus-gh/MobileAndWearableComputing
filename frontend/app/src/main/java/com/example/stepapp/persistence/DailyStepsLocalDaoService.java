@@ -12,6 +12,7 @@ import com.example.stepapp.persistence.model.DailySteps;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class DailyStepsLocalDaoService extends SQLiteOpenHelper implements DailyStepsDaoService<DailySteps> {
 
@@ -46,7 +47,7 @@ public class DailyStepsLocalDaoService extends SQLiteOpenHelper implements Daily
     }
 
     @Override
-    public DailySteps get(Context context, String day){
+    public void get(Context context, String day, Consumer<DailySteps> consumer){
 
         DailyStepsLocalDaoService service = new DailyStepsLocalDaoService(context);
         SQLiteDatabase database = service.getReadableDatabase();
@@ -68,7 +69,10 @@ public class DailyStepsLocalDaoService extends SQLiteOpenHelper implements Daily
                 columns, selection, selectionArgs,
                 null, null, null);
 
-        if(cursor.getCount() == 0) return null;
+        if(cursor.getCount() == 0) {
+            consumer.accept(null);
+            return;
+        }
 
         cursor.moveToFirst();
 
@@ -81,12 +85,11 @@ public class DailyStepsLocalDaoService extends SQLiteOpenHelper implements Daily
 
         Log.d("STORED STEPS: ", record.toString());
 
-        return record;
-
+        consumer.accept(record);
     }
 
     @Override
-    public List<DailySteps> getAll(Context context) {
+    public void getAll(Context context, Consumer<List<DailySteps>> onSuccess) {
 
         DailyStepsLocalDaoService service = new DailyStepsLocalDaoService(context);
         SQLiteDatabase database = service.getReadableDatabase();
@@ -123,12 +126,11 @@ public class DailyStepsLocalDaoService extends SQLiteOpenHelper implements Daily
 
         Log.d("STORED STEPS: ", String.valueOf(list));
 
-        return list;
-
+        onSuccess.accept(list);
     }
 
     @Override
-    public List<DailySteps> getAllExceptUser(Context context) {
+    public void getAllExceptUser(Context context, Consumer<List<DailySteps>> onSuccess) {
 
         DailyStepsLocalDaoService service = new DailyStepsLocalDaoService(context);
         SQLiteDatabase database = service.getReadableDatabase();
@@ -165,74 +167,72 @@ public class DailyStepsLocalDaoService extends SQLiteOpenHelper implements Daily
 
         Log.d("STORED STEPS: ", String.valueOf(list));
 
-        return list;
-
+        onSuccess.accept(list);
     }
 
     @Override
-    public long insert(Context context, DailySteps record){
+    public void insert(Context context, DailySteps record, Runnable onDone){
 
         DailyStepsLocalDaoService service = new DailyStepsLocalDaoService(context);
         SQLiteDatabase database = service.getWritableDatabase();
 
         ContentValues values = new ContentValues();
         values.put(DailyStepsLocalDaoService.KEY_USER, ApiService.getInstance(context).getLoggedUser().getUsername());
-        values.put(DailyStepsLocalDaoService.KEY_DAY, record.day);
+        values.put(DailyStepsLocalDaoService.KEY_DAY, record.date);
         values.put(DailyStepsLocalDaoService.KEY_STEPS, record.steps);
 
         long id = database.insert(DailyStepsLocalDaoService.TABLE_NAME, null, values);
 
         database.close();
 
-        return id;
-
+        onDone.run();
     }
 
     @Override
-    public long update(Context context, DailySteps record){
+    public void update(Context context, DailySteps record, Runnable onDone){
 
         DailyStepsLocalDaoService service = new DailyStepsLocalDaoService(context);
         SQLiteDatabase database = service.getWritableDatabase();
 
         ContentValues values = new ContentValues();
-        values.put(DailyStepsLocalDaoService.KEY_DAY, record.day);
+        values.put(DailyStepsLocalDaoService.KEY_DAY, record.date);
         values.put(DailyStepsLocalDaoService.KEY_STEPS, record.steps);
 
         String selection = "user=? AND day=?";
 
         String[] selectionArgs = new String[]{
                 ApiService.getInstance(context).getLoggedUser().getUsername(),
-                record.day
+                record.date
         };
 
         long rows = database.update(DailyStepsLocalDaoService.TABLE_NAME, values, selection, selectionArgs);
 
         database.close();
 
-        return rows;
+        onDone.run();
     }
 
     @Override
-    public long delete(Context context, DailySteps record){
+    public void delete(Context context, DailySteps record, Runnable onDone){
 
         DailyStepsLocalDaoService service = new DailyStepsLocalDaoService(context);
         SQLiteDatabase database = service.getWritableDatabase();
 
         ContentValues values = new ContentValues();
-        values.put(DailyStepsLocalDaoService.KEY_DAY, record.day);
+        values.put(DailyStepsLocalDaoService.KEY_DAY, record.date);
         values.put(DailyStepsLocalDaoService.KEY_STEPS, record.steps);
 
         String selection = "user=? AND day=?";
 
         String[] selectionArgs = new String[]{
                 ApiService.getInstance(context).getLoggedUser().getUsername(),
-                record.day
+                record.date
         };
 
         long rows = database.delete(DailyStepsLocalDaoService.TABLE_NAME, selection, selectionArgs);
 
         database.close();
 
-        return rows;
+        onDone.run();
     }
 }

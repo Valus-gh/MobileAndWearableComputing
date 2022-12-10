@@ -3,14 +3,14 @@ package com.example.stepapp.persistence.model;
 public class DailySteps {
 
     public int steps;
-    public String day;
+    public String date;
 
     public DailySteps() {
     }
 
-    public DailySteps(int steps, String day) {
+    public DailySteps(int steps, String date) {
         this.steps = steps;
-        this.day = day;
+        this.date = date;
     }
 
     public int getSteps() {
@@ -21,16 +21,23 @@ public class DailySteps {
         this.steps = steps;
     }
 
-    public String getDay() {
-        return day;
+    public String getDate() {
+        return date;
     }
 
-    public void setDay(String day) {
-        this.day = day;
+    public void setDate(String date) {
+        this.date = date;
     }
 
     public void incrementSteps(){
         steps++;
     }
 
+    @Override
+    public String toString() {
+        return "DailySteps{" +
+                "steps=" + steps +
+                ", day='" + date + '\'' +
+                '}';
+    }
 }

@@ -5,19 +5,20 @@ import android.content.Context;
 import com.example.stepapp.persistence.model.DailySteps;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public interface DailyStepsDaoService<T extends DailySteps> {
 
-    T get(Context context, String day);
+    void get(Context context, String day, Consumer<T> onResult);
 
-    List<T> getAll(Context context);
+    void getAll(Context context, Consumer<List<T>> onResult);
 
-    List<T> getAllExceptUser(Context context);
+    void getAllExceptUser(Context context, Consumer<List<T>> onResult);
 
-    long insert(Context context, T record);
+    void insert(Context context, T record, Runnable onDone);
 
-    long update(Context context, T record);
+    void update(Context context, T record, Runnable onDone);
 
-    long delete(Context context, T record);
+    void delete(Context context, T record, Runnable onDone);
 
 }

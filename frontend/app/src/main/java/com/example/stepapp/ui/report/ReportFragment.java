@@ -1,10 +1,7 @@
 package com.example.stepapp.ui.report;
 
-import static com.example.stepapp.service.StepCountService.dailySteps;
-
 import android.annotation.SuppressLint;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,18 +23,17 @@ import com.anychart.enums.Anchor;
 import com.anychart.graphics.vector.Stroke;
 import com.example.stepapp.R;
 import com.example.stepapp.api.ApiService;
+import com.example.stepapp.persistence.DailyStepsDaoService;
 import com.example.stepapp.persistence.DailyStepsLocalDaoService;
 
 import com.anychart.AnyChartView;
+import com.example.stepapp.persistence.DailyStepsRemoteDaoService;
 import com.example.stepapp.persistence.model.DailySteps;
 
-import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -52,7 +48,7 @@ public class ReportFragment extends Fragment {
 
     private LineGraphManager<DailyStepsDataEntry> manager;
 
-    DailyStepsLocalDaoService localService;
+    DailyStepsDaoService<DailySteps> dailyStepsService;
 
     @SuppressLint("SetTextI18n")
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -64,7 +60,10 @@ public class ReportFragment extends Fragment {
         dailyStepsLabel = root.findViewById(R.id.DailyStepsLabel);
         averageStepsLabel = root.findViewById(R.id.AverageStepsLabel);
 
-        localService = new DailyStepsLocalDaoService(getContext());
+        if(ApiService.getInstance(getContext()).isLocal())
+            dailyStepsService = new DailyStepsLocalDaoService(getContext());
+        else
+            dailyStepsService = new DailyStepsRemoteDaoService();
 
         //TODO setup chart
 
@@ -76,57 +75,50 @@ public class ReportFragment extends Fragment {
 
         //TODO fetch last 30 days LOCAL
 
-        List<DailySteps> userSteps = localService.getAll(getContext());
+        dailyStepsService.getAll(getContext(), (res) -> {
+            List<DailySteps> userSteps = res.stream()
+                    .sorted((o1, o2) -> {
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                        LocalDateTime d1 = LocalDateTime.parse(o1.getDate(), formatter);
+                        LocalDateTime d2 = LocalDateTime.parse(o2.getDate(), formatter);
+                        return d1.compareTo(d2);
+                    }).limit(30).collect(Collectors.toList());
 
-        userSteps = userSteps.stream()
-                .sorted((o1, o2) -> {
-                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                    LocalDateTime d1 = LocalDateTime.parse(o1.getDay(), formatter);
-                    LocalDateTime d2 = LocalDateTime.parse(o2.getDay(), formatter);
-                    return d1.compareTo(d2);
-                }).limit(30).collect(Collectors.toList());
-
-        //TODO fetch last 30 days REMOTE
-
-
-        //TODO add entries
-
-        if(!userSteps.isEmpty()){
-            for(int i = 0; i < 30 && i < userSteps.size(); i++){
-                DailySteps steps = userSteps.get(i);
-                manager.addEntry(new DailyStepsDataEntry(steps.getDay(), steps.getSteps(), null));
+            if(!userSteps.isEmpty()){
+                for(int i = 0; i < 30 && i < userSteps.size(); i++){
+                    DailySteps steps = userSteps.get(i);
+                    manager.addEntry(new DailyStepsDataEntry(steps.getDate(), steps.getSteps(), null));
+                }
             }
-        }
 
-        manager.addSeries(ApiService.getInstance(getContext()).getLoggedUser().getUsername(), manager.getMappingString("x", "value"));
+            manager.addSeries(ApiService.getInstance(getContext()).getLoggedUser().getUsername(), manager.getMappingString("x", "value"));
 
-        manager.render();
+            manager.render();
 
-        //TODO update labels
+            @SuppressLint("SimpleDateFormat")
+            SimpleDateFormat jdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
+            jdf.setTimeZone(TimeZone.getTimeZone("GMT+2"));
+            String date = jdf.format(new Date());
+            String day = date.substring(0,10);
 
-        @SuppressLint("SimpleDateFormat")
-        SimpleDateFormat jdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
-        jdf.setTimeZone(TimeZone.getTimeZone("GMT+2"));
-        String date = jdf.format(new Date());
-        String day = date.substring(0,10);
+            Optional<DailySteps> today =
+                    userSteps.stream()
+                            .filter(dailySteps -> dailySteps.getDate().equals(day))
+                            .findFirst();
 
-        Optional<DailySteps> today =
-                userSteps.stream()
-                .filter(dailySteps -> dailySteps.getDay().equals(day))
-                .findFirst();
+            today.ifPresent(dailySteps -> dailyStepsLabel.setText(getResources().getString(R.string.dailyStepsLabel) + dailySteps.getSteps()));
 
-        today.ifPresent(dailySteps -> dailyStepsLabel.setText(getResources().getString(R.string.dailyStepsLabel) + dailySteps.getSteps()));
+            int average = 0;
 
-        int average = 0;
+            if(!userSteps.isEmpty()){
+                for(int i = 0; i < 30 && i < userSteps.size(); i++)
+                    average += userSteps.get(i).getSteps();
 
-        if(!userSteps.isEmpty()){
-            for(int i = 0; i < 30 && i < userSteps.size(); i++)
-                average += userSteps.get(i).getSteps();
+                average /= Math.min(userSteps.size(), 30);
+            }
 
-            average /= Math.min(userSteps.size(), 30);
-        }
-
-        averageStepsLabel.setText(getResources().getString(R.string.averageStepsLabel) + average);
+            averageStepsLabel.setText(getResources().getString(R.string.averageStepsLabel) + average);
+        });
 
         return root;
     }
