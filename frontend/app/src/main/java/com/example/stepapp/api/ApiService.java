@@ -14,6 +14,7 @@ import com.android.volley.toolbox.Volley;
 import com.example.stepapp.BuildConfig;
 import com.example.stepapp.api.exception.ApiException;
 import com.example.stepapp.api.model.CredentialsDto;
+import com.example.stepapp.api.model.DailyStepsListDto;
 import com.example.stepapp.api.model.TokenDto;
 import com.example.stepapp.api.requests.AuthenticatedJsonRequest;
 import com.example.stepapp.api.requests.AuthenticatedStringRequest;
@@ -132,8 +133,8 @@ public class ApiService {
 
     public void getAllSteps(Consumer<DailySteps[]> onSuccess, Consumer<ApiException> onError) {
         AuthenticatedJsonRequest request = new AuthenticatedJsonRequest(Request.Method.GET, baseUrl + "daily-steps", accessToken, null, response -> {
-            DailySteps[] steps = gson.fromJson(response.toString(), DailySteps[].class);
-            onSuccess.accept(steps);
+            DailyStepsListDto steps = gson.fromJson(response.toString(), DailyStepsListDto.class);
+            onSuccess.accept(steps.getItems());
         }, error -> this.forwardError(error, onError));
 
         queue.add(request);
@@ -141,8 +142,8 @@ public class ApiService {
 
     public void getAllStepsExceptUser(Consumer<DailySteps[]> onSuccess, Consumer<ApiException> onError) {
         AuthenticatedJsonRequest request = new AuthenticatedJsonRequest(Request.Method.GET, baseUrl + "daily-steps/except-user", accessToken, null, response -> {
-            DailySteps[] steps = gson.fromJson(response.toString(), DailySteps[].class);
-            onSuccess.accept(steps);
+            DailyStepsListDto steps = gson.fromJson(response.toString(), DailyStepsListDto.class);
+            onSuccess.accept(steps.getItems());
         }, error -> this.forwardError(error, onError));
 
         queue.add(request);
