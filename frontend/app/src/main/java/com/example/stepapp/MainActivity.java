@@ -1,6 +1,7 @@
 package com.example.stepapp;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -11,9 +12,11 @@ import android.widget.Toast;
 import com.example.stepapp.service.StepCountService;
 import com.example.stepapp.ui.home.HomeFragment;
 import com.example.stepapp.ui.report.ReportFragment;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -25,12 +28,13 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements BottomNavigationView.OnNavigationItemSelectedListener{
 
-    private DrawerLayout drawer;
-    private NavigationView navigationView;
+    private ConstraintLayout mainLayout;
+    private ConstraintLayout fragmentContainer;
+    private BottomNavigationView bottomnav;
 
-    private AppBarConfiguration mAppBarConfiguration;
+
     private static final int REQUEST_ACTIVITY_RECOGNITION_PERMISSION = 45;
     private final boolean runningQOrLater =
             android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
@@ -43,20 +47,13 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        navigationView = (NavigationView) findViewById(R.id.nav_view);
+        mainLayout = (ConstraintLayout) findViewById(R.id.main_layout);
+        fragmentContainer = (ConstraintLayout) findViewById(R.id.fragment_container);
+        bottomnav = (BottomNavigationView) findViewById(R.id.bottom_nav_view);
 
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
-        mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_steps_item, R.id.nav_report, R.id.nav_profile_item)
-                .setDrawerLayout(drawer)
-                .build();
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
-        NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
-        NavigationUI.setupWithNavController(navigationView, navController);
+        bottomnav.setOnNavigationItemSelectedListener(this);
 
-        setupDrawerContent(navigationView);
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new HomeFragment()).commit();
 
         // Start step-counting BG service
         if(!StepCountService.RUNNING) StepCountService.startStepCountingService(this);
@@ -68,51 +65,27 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void setupDrawerContent(NavigationView navigationView) {
-        navigationView.setNavigationItemSelectedListener(
-                menuItem -> {
-                    selectDrawerItem(menuItem);
-                    return true;
-                });
-    }
-
-    public void selectDrawerItem(MenuItem menuItem) {
-        // Create a new fragment and specify the fragment to show based on nav item clicked
+    @SuppressLint("NonConstantResourceId")
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         Fragment fragment = null;
-        Class fragmentClass;
-        switch(menuItem.getItemId()) {
-            case R.id.nav_profile_item:
-                fragmentClass = HomeFragment.class;
-                if (getSupportActionBar() != null) {
-                    getSupportActionBar().setTitle("Steps");
-                }
+        switch (item.getItemId()) {
+            case R.id.nav_steps_item:
+                fragment = new HomeFragment();
                 break;
             case R.id.nav_report_item:
-                fragmentClass = ReportFragment.class;
-                if (getSupportActionBar() != null) {
-                    getSupportActionBar().setTitle("Report");
-                }
+                fragment = new ReportFragment();
                 break;
+//            case R.id.nav_profile_item:
+//                fragment = new ProfileFragment();
+//                break;
+
             default:
-                fragmentClass = HomeFragment.class;
         }
-
-        try {
-            fragment = (Fragment) fragmentClass.newInstance();
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (fragment != null) {
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, fragment).commit();
         }
-
-        // Insert the fragment by replacing any existing fragment
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        fragmentManager.beginTransaction().replace(R.id.nav_host_fragment, fragment).commit();
-
-        // Highlight the selected item has been done by NavigationView
-        menuItem.setChecked(true);
-        // Set action bar title
-        setTitle(menuItem.getTitle());
-        // Close the navigation drawer
-        drawer.closeDrawers();
+        return true;
     }
 
     @Override
@@ -130,13 +103,6 @@ public class MainActivity extends AppCompatActivity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
-    }
-
-    @Override
-    public boolean onSupportNavigateUp() {
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
-        return NavigationUI.navigateUp(navController, mAppBarConfiguration)
-                || super.onSupportNavigateUp();
     }
 
     // Ask for permission

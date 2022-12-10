@@ -86,7 +86,7 @@ public class DailyStepsLocalDaoService extends SQLiteOpenHelper implements Daily
     }
 
     @Override
-    public List<DailySteps> getAllForTimeframe(Context context, int days) {
+    public List<DailySteps> getAll(Context context) {
 
         DailyStepsLocalDaoService service = new DailyStepsLocalDaoService(context);
         SQLiteDatabase database = service.getReadableDatabase();
@@ -106,12 +106,52 @@ public class DailyStepsLocalDaoService extends SQLiteOpenHelper implements Daily
 
         String orderBy = "id desc";
 
-        String limit = "limit " + days;
+        Cursor cursor = database.query(
+                DailyStepsLocalDaoService.TABLE_NAME,
+                columns, selection, selectionArgs,
+                null, null, orderBy);
+
+        cursor.moveToFirst();
+
+        for(int i = 0; i < cursor.getCount(); i++){
+            list.add(new DailySteps(cursor.getInt(1), cursor.getString(0)));
+            cursor.moveToNext();
+        }
+
+        cursor.close();
+        database.close();
+
+        Log.d("STORED STEPS: ", String.valueOf(list));
+
+        return list;
+
+    }
+
+    @Override
+    public List<DailySteps> getAllExceptUser(Context context) {
+
+        DailyStepsLocalDaoService service = new DailyStepsLocalDaoService(context);
+        SQLiteDatabase database = service.getReadableDatabase();
+
+        List<DailySteps> list = new ArrayList<>();
+
+        String[] columns = new String[]{
+                DailyStepsLocalDaoService.KEY_DAY,
+                DailyStepsLocalDaoService.KEY_STEPS
+        };
+
+        String selection = "user!=?";
+
+        String[] selectionArgs = new String[]{
+                ApiService.getInstance(context).getLoggedUser().getUsername()
+        };
+
+        String orderBy = "id desc";
 
         Cursor cursor = database.query(
                 DailyStepsLocalDaoService.TABLE_NAME,
                 columns, selection, selectionArgs,
-                null, null, orderBy, limit);
+                null, null, orderBy);
 
         cursor.moveToFirst();
 

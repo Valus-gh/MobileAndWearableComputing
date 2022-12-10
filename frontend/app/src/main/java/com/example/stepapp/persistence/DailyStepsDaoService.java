@@ -10,7 +10,9 @@ public interface DailyStepsDaoService<T extends DailySteps> {
 
     T get(Context context, String day);
 
-    List<T> getAllForTimeframe(Context context, int days);
+    List<T> getAll(Context context);
+
+    List<T> getAllExceptUser(Context context);
 
     long insert(Context context, T record);
 
