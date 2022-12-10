@@ -7,20 +7,20 @@
 
     <fragment
         android:id="@+id/nav_steps_item"
-        android:name="com.example.stepapp.ui.home.HomeFragment"
+        android:name="ch.disappointment.WalkoutCompanion.ui.home.HomeFragment"
         android:label="@string/menu_steps"
         tools:layout="@layout/fragment_home" >
     </fragment>
 
     <fragment
         android:id="@+id/nav_report_item"
-        android:name="com.example.stepapp.ui.report.ReportFragment"
+        android:name="ch.disappointment.WalkoutCompanion.ui.report.ReportFragment"
         android:label="@string/menu_report"
         tools:layout="@layout/report_fragment" />
 
     <fragment
         android:id="@+id/nav_profile_item"
-        android:name="com.example.stepapp.ui.slideshow.SlideshowFragment"
+        android:name="ch.disappointment.WalkoutCompanion.ui.slideshow.SlideshowFragment"
         android:label="@string/menu_profile"
         tools:layout="@layout/fragment_slideshow" />
 </navigation>

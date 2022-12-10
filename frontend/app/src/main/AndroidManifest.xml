@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.stepapp">
+    package="ch.disappointment.WalkoutCompanion">
     <!-- Required for 28 and below. -->
     <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" /> <!-- Required for 29+. -->
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
     <uses-feature
         android:name="android.hardware.sensor.stepcounter"
@@ -22,7 +23,7 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".LoginActivity"
+            android:name="ch.disappointment.WalkoutCompanion.LoginActivity"
             android:exported="true"
             android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="adjustPan"
@@ -36,13 +37,13 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".MainActivity"
+            android:name="ch.disappointment.WalkoutCompanion.MainActivity"
             android:exported="false"
             android:theme="@style/AppTheme.NoActionBar">
         </activity>
 
         <service
-            android:name=".service.StepCountService"
+            android:name="ch.disappointment.WalkoutCompanion.service.StepCountService"
             android:stopWithTask="false" />
     </application>
 
