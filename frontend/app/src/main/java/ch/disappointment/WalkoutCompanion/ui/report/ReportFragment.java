@@ -17,6 +17,7 @@ import com.anychart.charts.Cartesian;
 import com.anychart.core.cartesian.series.Line;
 import com.anychart.data.Mapping;
 import com.anychart.data.Set;
+import com.anychart.enums.HoverMode;
 import com.anychart.enums.MarkerType;
 import com.anychart.enums.TooltipPositionMode;
 import com.anychart.enums.Anchor;
@@ -59,8 +60,8 @@ public class ReportFragment extends Fragment {
         View root = inflater.inflate(R.layout.report_fragment, container, false);
 
         userStepsGraph = root.findViewById(R.id.UserStepsGraph);
-        dailyStepsLabel = root.findViewById(R.id.DailyStepsLabel);
-        averageStepsLabel = root.findViewById(R.id.AverageStepsLabel);
+        dailyStepsLabel = root.findViewById(R.id.DailyStepsNumber);
+        averageStepsLabel = root.findViewById(R.id.AverageStepsNumber);
 
         if(ApiService.getInstance(getContext()).isLocal())
             dailyStepsService = new DailyStepsLocalDaoService(getContext());
@@ -108,7 +109,8 @@ public class ReportFragment extends Fragment {
                             .filter(dailySteps -> dailySteps.getDate().equals(day))
                             .findFirst();
 
-            today.ifPresent(dailySteps -> dailyStepsLabel.setText(getResources().getString(R.string.dailyStepsLabel) + dailySteps.getSteps()));
+
+            today.ifPresent(dailySteps -> dailyStepsLabel.setText(String.valueOf(dailySteps.getSteps())));
 
             int average = 0;
 
@@ -119,7 +121,7 @@ public class ReportFragment extends Fragment {
                 average /= Math.min(userSteps.size(), 30);
             }
 
-            averageStepsLabel.setText(getResources().getString(R.string.averageStepsLabel) + average);
+            averageStepsLabel.setText(String.valueOf(average));
         });
 
         return root;
@@ -199,18 +201,12 @@ class LineGraphManager<T extends DataEntry> {
         cartesian.legend().fontSize(13d);
         cartesian.legend().padding(0d, 0d, 10d, 0d);
 
+        cartesian.background().fill("#00000000");
+        cartesian.interactivity().hoverMode(HoverMode.BY_X);
+
+        graph.setBackgroundColor("#00000000");
         graph.setChart(cartesian);
 
-    }
-
-}
-
-class CustomDataEntry extends ValueDataEntry {
-
-    CustomDataEntry(String x, Number value, Number value2, Number value3) {
-        super(x, value);
-        setValue("value2", value2);
-        setValue("value3", value3);
     }
 
 }
