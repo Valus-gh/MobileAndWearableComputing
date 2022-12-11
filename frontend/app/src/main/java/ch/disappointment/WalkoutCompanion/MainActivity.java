@@ -4,6 +4,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -13,8 +14,7 @@ import android.widget.Toast;
 
 import ch.disappointment.WalkoutCompanion.api.ApiService;
 import ch.disappointment.WalkoutCompanion.persistence.DailyStepsDaoService;
-import ch.disappointment.WalkoutCompanion.persistence.DailyStepsLocalDaoService;
-import ch.disappointment.WalkoutCompanion.persistence.DailyStepsRemoteDaoService;
+import ch.disappointment.WalkoutCompanion.persistence.TokensDaoService;
 import ch.disappointment.WalkoutCompanion.persistence.model.DailySteps;
 import ch.disappointment.WalkoutCompanion.service.StepCountService;
 import ch.disappointment.WalkoutCompanion.ui.home.HomeFragment;
@@ -35,7 +35,6 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
     private BottomNavigationView bottomnav;
     private DailyStepsDaoService<DailySteps> stepsDaoService;
 
-
     private static final int REQUEST_ACTIVITY_RECOGNITION_PERMISSION = 45;
     private final boolean runningQOrLater =
             android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
@@ -52,6 +51,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         fragmentContainer = (ConstraintLayout) findViewById(R.id.fragment_container);
         bottomnav = (BottomNavigationView) findViewById(R.id.bottom_nav_view);
 
+
         bottomnav.setOnNavigationItemSelectedListener(this);
 
         getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new HomeFragment()).commit();
@@ -62,6 +62,25 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         }
 
         createNotificationChannel();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(item.getItemId() == R.id.action_logout){
+            if(StepCountService.RUNNING)
+                StepCountService.stopStepCountingService(this);
+
+            ApiService.getInstance(this).logout();
+            TokensDaoService daoService = new TokensDaoService(this);
+            daoService.deleteAllExcept(this, "LOCAL_USER");
+
+            Intent loginActivityIntent = new Intent(this, LoginActivity.class);
+            startActivity(loginActivityIntent);
+
+            return true;
+        }
+
+        return false;
     }
 
     @SuppressLint("NonConstantResourceId")

@@ -38,18 +38,6 @@ public class HomeFragment extends Fragment {
 
         View root = inflater.inflate(R.layout.fragment_home, container, false);
 
-        // Load latest step count
-        if(ApiService.getInstance(getContext()).isLocal())
-            stepsDaoService = new DailyStepsLocalDaoService(getContext());
-        else
-            stepsDaoService = new DailyStepsRemoteDaoService();
-
-        stepsDaoService.get(getContext(), DayUtils.getCurrentDay(), (dailySteps -> {
-            StepCountService.dailySteps.steps = dailySteps.steps;
-            StepCountService.dailySteps.date = dailySteps.date;
-            updateStepsView.run();
-        }));
-
         this.stepsCountTextView = root.findViewById(R.id.stepsCount);
         this.stepsCountProgressBar = root.findViewById(R.id.progressBar);
         this.toggleServiceButton = root.findViewById(R.id.startServiceBtn);
@@ -68,6 +56,23 @@ public class HomeFragment extends Fragment {
                 StepCountService.startStepCountingService(requireContext());
             }
         });
+
+        // Load latest step count
+        if(ApiService.getInstance(getContext()).isLocal())
+            stepsDaoService = new DailyStepsLocalDaoService(getContext());
+        else
+            stepsDaoService = new DailyStepsRemoteDaoService();
+
+        stepsDaoService.get(getContext(), DayUtils.getCurrentDay(), (dailySteps -> {
+            if(dailySteps == null) {
+                dailySteps = new DailySteps();
+                dailySteps.date = DayUtils.getCurrentDay();
+                dailySteps.steps = 0;
+            }
+
+            StepCountService.dailySteps.steps = dailySteps.steps;
+            StepCountService.dailySteps.date = dailySteps.date;
+        }));
 
         updateHandler = new Handler();
         updateHandler.post(updateStepsView);

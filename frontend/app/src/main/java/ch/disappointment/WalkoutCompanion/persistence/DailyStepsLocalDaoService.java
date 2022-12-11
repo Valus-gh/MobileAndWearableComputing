@@ -42,6 +42,11 @@ public class DailyStepsLocalDaoService extends SQLiteOpenHelper implements Daily
     }
 
     @Override
+    public void onOpen(SQLiteDatabase db) {
+        db.execSQL(CREATE_TABLE_SQL);
+    }
+
+    @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         //
     }
@@ -50,7 +55,7 @@ public class DailyStepsLocalDaoService extends SQLiteOpenHelper implements Daily
     public void get(Context context, String day, Consumer<DailySteps> consumer){
 
         DailyStepsLocalDaoService service = new DailyStepsLocalDaoService(context);
-        SQLiteDatabase database = service.getReadableDatabase();
+        SQLiteDatabase database = service.getWritableDatabase();
 
         String[] columns = new String[]{
                 DailyStepsLocalDaoService.KEY_DAY,

@@ -33,6 +33,8 @@
     <string name="svc_notification_message">Tracking your steps...</string>
     <string name="start_service_button_text">Start Tracking Steps</string>
     <string name="stop_service_button_text">Stop Tracking Steps</string>
+    <string name="use_local_btn_text"> Use Local storage </string>
+    <string name="action_logout">Logout</string>
 
 </resources>
 
