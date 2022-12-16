@@ -34,6 +34,7 @@
             android:exported="true"
             android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="adjustPan"
+            android:noHistory="true"
             >
             <meta-data
                 android:name="android.app.lib_name"
@@ -45,6 +46,12 @@
         </activity>
         <activity
             android:name="ch.disappointment.WalkoutCompanion.MainActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme.NoActionBar">
+        </activity>
+
+        <activity
+            android:name="ch.disappointment.WalkoutCompanion.ui.map.MapActivity"
             android:exported="false"
             android:theme="@style/AppTheme.NoActionBar">
         </activity>

@@ -2,6 +2,7 @@ package ch.disappointment.WalkoutCompanion.ui.map;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -14,8 +15,9 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -34,7 +36,7 @@ import org.osmdroid.views.overlay.Marker;
 import ch.disappointment.WalkoutCompanion.R;
 
 
-public class MapFragment extends Fragment {
+public class MapActivity extends AppCompatActivity {
     private MapViewModel viewModel;
     private FusedLocationProviderClient locationProvider;
 
@@ -48,46 +50,45 @@ public class MapFragment extends Fragment {
     private long UPDATE_INTERVAL = 10 * 1000;  /* 10 secs */
     private long FASTEST_INTERVAL = 2000; /* 2 sec */
 
-
     @SuppressLint("MissingPermission")
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             ViewGroup container, Bundle savedInstanceState) {
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-        View root = inflater.inflate(R.layout.fragment_map, container, false);
+        setContentView(R.layout.activity_map);
 
         // retrieve viewModel
-        ViewModelProvider provider = new ViewModelProvider(requireActivity());
+        ViewModelProvider provider = new ViewModelProvider(this);
         viewModel = provider.get(MapViewModel.class);
 
         // retrieve map
-        map = (MapView) root.findViewById(R.id.map);
+        map = (MapView) findViewById(R.id.map);
         map.setTileSource(TileSourceFactory.MAPNIK);
 
         // setup FAB
-        fab = (FloatingActionButton) root.findViewById(R.id.mapFab);
+        fab = (FloatingActionButton) findViewById(R.id.mapFab);
         fab.setOnClickListener(view -> {
 
         });
 
         // setup the location listeners
         if(checkLocationPermissions()) {
-            locationProvider = LocationServices.getFusedLocationProviderClient(requireContext());
+            locationProvider = LocationServices.getFusedLocationProviderClient(this);
             locationProvider.requestLocationUpdates(
                     new LocationRequest
                             .Builder(Priority.PRIORITY_HIGH_ACCURACY, UPDATE_INTERVAL)
                             .build(),
-                    new MapLocationListener(getActivity()),
+                    new MapLocationListener(this),
                     Looper.myLooper()
             );
 
-            updateLastLocation(requireContext());
+            updateLastLocation(this);
         }
 
 
-        viewModel.currentLocation().observe(requireActivity(), this::setMapMarkerPosition);
-
-        return root;
+        viewModel.currentLocation().observe(this, this::setMapMarkerPosition);
     }
+
 
     @Override
     public void onResume() {
@@ -123,13 +124,13 @@ public class MapFragment extends Fragment {
 
     private boolean checkLocationPermissions(){
         if (ActivityCompat.checkSelfPermission(
-                requireContext(),
+                this,
                 Manifest.permission.ACCESS_FINE_LOCATION
         ) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(
-                        requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION
+                        this, Manifest.permission.ACCESS_COARSE_LOCATION
                 ) != PackageManager.PERMISSION_GRANTED) {
-            Toast t = new Toast(requireContext());
+            Toast t = new Toast(this);
             t.setText("You have not granted location permission. Some feature may not work.");
             return false;
         }

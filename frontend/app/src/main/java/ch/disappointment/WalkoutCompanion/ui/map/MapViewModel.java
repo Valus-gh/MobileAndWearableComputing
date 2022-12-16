@@ -31,7 +31,7 @@ public class MapViewModel extends ViewModel {
         this.currentTrack.setValue(t);
     }
 
-    public void addGeoPoint(GeoPoint p) {
+    public void addGeoPoint(Track.TrackNode p) {
         Track t = currentTrack.getValue();
         if(t == null)
             return;

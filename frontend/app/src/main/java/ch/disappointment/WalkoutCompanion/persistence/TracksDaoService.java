@@ -16,11 +16,6 @@ import java.util.stream.Collectors;
 
 import ch.disappointment.WalkoutCompanion.persistence.model.Track;
 
-class GeoPointWithTime {
-    public Long time;
-    public GeoPoint point;
-}
-
 public class TracksDaoService extends SQLiteOpenHelper {
     private static final int DATABASE_VERSION = 1;
     private static final String DATABASE_NAME = "walkout_companion";
@@ -68,7 +63,7 @@ public class TracksDaoService extends SQLiteOpenHelper {
 
     }
 
-    public Track getTrack(Context ctx, Integer trackId) {
+    public Track getTrack(Context ctx, Long trackId) {
         TracksDaoService service = new TracksDaoService(ctx);
         SQLiteDatabase database = service.getWritableDatabase();
 
@@ -87,19 +82,19 @@ public class TracksDaoService extends SQLiteOpenHelper {
                 null, null, null);
 
         Track t = new Track();
-        ArrayList<GeoPointWithTime> points = new ArrayList<>();
+        ArrayList<Track.TrackNode> points = new ArrayList<>();
         if (cursor.getCount() != 0) {
             cursor.moveToFirst();
             for (int i = 0; i < cursor.getCount(); i++) {
                 double lat = cursor.getDouble(0);
                 double lon = cursor.getDouble(1);
-                Long time = cursor.getLong(2);
+                long time = cursor.getLong(2);
 
                 GeoPoint gp = new GeoPoint(lat, lon);
-                GeoPointWithTime gpwt = new GeoPointWithTime();
-                gpwt.point = gp;
-                gpwt.time = time;
-                points.add(gpwt);
+                Track.TrackNode node = new Track.TrackNode();
+                node.setPoint(gp);
+                node.setTime(Instant.ofEpochSecond(time));
+                points.add(node);
             }
         }
 
@@ -108,10 +103,11 @@ public class TracksDaoService extends SQLiteOpenHelper {
 
         t.setPoints(points
                 .stream()
-                .sorted((p1, p2) -> (int) (p1.time - p2.time))
-                .map(it -> it.point)
+                .sorted((p1, p2) -> (int) (p1.getTime().getEpochSecond() - p2.getTime().getEpochSecond()))
                 .collect(Collectors.toList())
         );
+
+        t.setId(trackId);
 
         return t;
     }
@@ -136,7 +132,7 @@ public class TracksDaoService extends SQLiteOpenHelper {
         if (cursor.getCount() != 0) {
             cursor.moveToFirst();
             for (int i = 0; i < cursor.getCount(); i++) {
-                Integer trackId = cursor.getInt(0);
+                long trackId = cursor.getInt(0);
                 Track t = this.getTrack(ctx, trackId);
                 tracks.add(t);
             }
@@ -149,7 +145,7 @@ public class TracksDaoService extends SQLiteOpenHelper {
     }
 
     // returns the ID
-    public long createEmptyTrack(Context ctx, String username) {
+    public Track createEmptyTrack(Context ctx, String username) {
         TracksDaoService service = new TracksDaoService(ctx);
         SQLiteDatabase database = service.getWritableDatabase();
 
@@ -163,7 +159,7 @@ public class TracksDaoService extends SQLiteOpenHelper {
         long id = database.insert(TRACKS_TABLE_NAME, null, values);
 
         database.close();
-        return id;
+        return getTrack(ctx, id);
     }
 
     public void addPoint(Context ctx, Integer trackId, Instant now, GeoPoint gp) {

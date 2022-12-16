@@ -18,8 +18,8 @@ import ch.disappointment.WalkoutCompanion.persistence.TokensDaoService;
 import ch.disappointment.WalkoutCompanion.persistence.model.DailySteps;
 import ch.disappointment.WalkoutCompanion.service.StepCountService;
 import ch.disappointment.WalkoutCompanion.ui.home.HomeFragment;
-import ch.disappointment.WalkoutCompanion.ui.map.MapFragment;
 import ch.disappointment.WalkoutCompanion.ui.report.ReportFragment;
+import ch.disappointment.WalkoutCompanion.ui.tracks.TracksFragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -108,8 +108,8 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
             case R.id.nav_report_item:
                 fragment = new ReportFragment();
                 break;
-            case R.id.nav_map_item:
-                fragment = new MapFragment();
+            case R.id.nav_tracks_item:
+                fragment = new TracksFragment();
                 break;
 
             default:

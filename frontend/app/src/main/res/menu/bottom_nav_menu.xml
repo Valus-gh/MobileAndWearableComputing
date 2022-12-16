@@ -13,9 +13,9 @@
             android:icon="@drawable/ic_menu_bar_chart"
             android:title="@string/menu_report" />
         <item
-            android:id="@+id/nav_map_item"
-            android:icon="@drawable/ic_menu_person"
-            android:title="@string/menu_profile" />
+            android:id="@+id/nav_tracks_item"
+            android:icon="@drawable/ic_baseline_route_24"
+            android:title="@string/menu_tracks" />
     </group>
 </menu>
 
