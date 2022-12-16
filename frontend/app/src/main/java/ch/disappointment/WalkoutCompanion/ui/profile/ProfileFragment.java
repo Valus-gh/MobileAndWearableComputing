@@ -42,6 +42,7 @@ public class ProfileFragment extends Fragment {
     private ProfileViewModel profileViewModel;
     private MapView map;
     private FusedLocationProviderClient locationProvider;
+    private static double defaultZoom = 18;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -94,7 +95,7 @@ public class ProfileFragment extends Fragment {
             return;
         }
         IMapController controller = map.getController();
-        controller.setZoom(9.5);
+        controller.setZoom(defaultZoom);
 
         Task<Location> task = locationProvider.getLastLocation();
         task.addOnSuccessListener(location -> {
@@ -110,6 +111,7 @@ public class ProfileFragment extends Fragment {
             Log.i("LOCATION", "last known location: " + lat + ", " + lon + ", " + alt);
 
             GeoPoint current = new GeoPoint(lat, lon, alt);
+            controller.setZoom(defaultZoom);
             controller.setCenter(current);
         });
 
