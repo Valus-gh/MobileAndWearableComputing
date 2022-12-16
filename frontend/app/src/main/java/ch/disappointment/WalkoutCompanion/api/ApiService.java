@@ -49,7 +49,11 @@ public class ApiService {
     }
 
     private void forwardError(VolleyError error, Consumer<ApiException> onError) {
-        onError.accept(new ApiException(error.getMessage(), error.networkResponse != null ? error.networkResponse.statusCode : 0, error));
+        int status = error.networkResponse != null ? error.networkResponse.statusCode : 0;
+        if(error.getMessage() != null)
+            onError.accept(new ApiException(error.getMessage(), status, error));
+        else
+            onError.accept(new ApiException(error.toString(), status, error));
     }
 
     private void loginOrRegister(CredentialsDto credentials, String path, Consumer<TokenDto> onLogged, Consumer<ApiException> onError) {

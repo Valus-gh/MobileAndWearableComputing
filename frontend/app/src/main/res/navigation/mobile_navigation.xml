@@ -20,9 +20,9 @@
 
     <fragment
         android:id="@+id/nav_profile_item"
-        android:name="ch.disappointment.WalkoutCompanion.ui.slideshow.SlideshowFragment"
+        android:name="ch.disappointment.WalkoutCompanion.ui.profile.ProfileFragment"
         android:label="@string/menu_profile"
-        tools:layout="@layout/fragment_slideshow" />
+        tools:layout="@layout/fragment_profile" />
 </navigation>
 
 
