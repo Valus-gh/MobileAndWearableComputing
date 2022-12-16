@@ -5,7 +5,7 @@
     android:id="@+id/MapConstraints"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="ch.disappointment.WalkoutCompanion.ui.profile.ProfileFragment">
+    tools:context="ch.disappointment.WalkoutCompanion.ui.map.MapFragment">
 
     <org.osmdroid.views.MapView
         android:id="@+id/map"
@@ -20,20 +20,20 @@
     </org.osmdroid.views.MapView>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/floatingActionButton"
+        android:id="@+id/mapFab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="560dp"
         android:layout_marginEnd="300dp"
         android:clickable="true"
         android:scaleType="center"
-        android:src="@android:drawable/ic_menu_add"
+        android:src="@drawable/ic_add_light"
         app:backgroundTint="@color/colorPrimary"
         app:fabSize="auto"
         app:layout_constraintBottom_toBottomOf="@id/map"
         app:layout_constraintEnd_toEndOf="@id/map"
         app:layout_constraintStart_toStartOf="@id/map"
         app:layout_constraintTop_toTopOf="@id/map"
-        app:maxImageSize="64dp" />
+        app:maxImageSize="32dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

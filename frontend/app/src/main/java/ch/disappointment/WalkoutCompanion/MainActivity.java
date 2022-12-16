@@ -11,7 +11,6 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.MenuItem;
 import android.view.Menu;
-import android.widget.Toast;
 
 import ch.disappointment.WalkoutCompanion.api.ApiService;
 import ch.disappointment.WalkoutCompanion.persistence.DailyStepsDaoService;
@@ -19,7 +18,7 @@ import ch.disappointment.WalkoutCompanion.persistence.TokensDaoService;
 import ch.disappointment.WalkoutCompanion.persistence.model.DailySteps;
 import ch.disappointment.WalkoutCompanion.service.StepCountService;
 import ch.disappointment.WalkoutCompanion.ui.home.HomeFragment;
-import ch.disappointment.WalkoutCompanion.ui.profile.ProfileFragment;
+import ch.disappointment.WalkoutCompanion.ui.map.MapFragment;
 import ch.disappointment.WalkoutCompanion.ui.report.ReportFragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -34,7 +33,6 @@ import androidx.appcompat.widget.Toolbar;
 
 import org.osmdroid.config.Configuration;
 
-import java.security.Permission;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -110,8 +108,8 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
             case R.id.nav_report_item:
                 fragment = new ReportFragment();
                 break;
-            case R.id.nav_profile_item:
-                fragment = new ProfileFragment();
+            case R.id.nav_map_item:
+                fragment = new MapFragment();
                 break;
 
             default:
