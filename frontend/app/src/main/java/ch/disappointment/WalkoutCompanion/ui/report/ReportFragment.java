@@ -17,6 +17,7 @@ import com.anychart.charts.Cartesian;
 import com.anychart.core.cartesian.series.Line;
 import com.anychart.data.Mapping;
 import com.anychart.data.Set;
+import com.anychart.enums.HoverMode;
 import com.anychart.enums.MarkerType;
 import com.anychart.enums.TooltipPositionMode;
 import com.anychart.enums.Anchor;
@@ -36,10 +37,15 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.TimeZone;
+import java.util.TreeMap;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class ReportFragment extends Fragment {
@@ -59,8 +65,8 @@ public class ReportFragment extends Fragment {
         View root = inflater.inflate(R.layout.report_fragment, container, false);
 
         userStepsGraph = root.findViewById(R.id.UserStepsGraph);
-        dailyStepsLabel = root.findViewById(R.id.DailyStepsLabel);
-        averageStepsLabel = root.findViewById(R.id.AverageStepsLabel);
+        dailyStepsLabel = root.findViewById(R.id.DailyStepsNumber);
+        averageStepsLabel = root.findViewById(R.id.AverageStepsNumber);
 
         if(ApiService.getInstance(getContext()).isLocal())
             dailyStepsService = new DailyStepsLocalDaoService(getContext());
@@ -75,9 +81,17 @@ public class ReportFragment extends Fragment {
         manager.setTitle("Daily Steps over 30 days");
         manager.setYTitle("Number of Steps");
 
-        //TODO fetch last 30 days LOCAL
+        if(ApiService.getInstance(requireContext()).isLocal())
+            dailyStepsService.getAll(getContext(), populateChartLocal());
+        else
+            dailyStepsService.getAll(getContext(), populateChartRemote());
 
-        dailyStepsService.getAll(getContext(), (res) -> {
+
+        return root;
+    }
+
+    private Consumer<List<DailySteps>> populateChartLocal(){
+        return (res) ->{
             List<DailySteps> userSteps = res.stream()
                     .sorted((o1, o2) -> {
                         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -86,8 +100,8 @@ public class ReportFragment extends Fragment {
                         return d1.compareTo(d2);
                     }).limit(30).collect(Collectors.toList());
 
-            if(!userSteps.isEmpty()){
-                for(int i = 0; i < 30 && i < userSteps.size(); i++){
+            if (!userSteps.isEmpty()) {
+                for (int i = 0; i < 30 && i < userSteps.size(); i++) {
                     DailySteps steps = userSteps.get(i);
                     manager.addEntry(new DailyStepsDataEntry(steps.getDate(), steps.getSteps(), null));
                 }
@@ -95,36 +109,153 @@ public class ReportFragment extends Fragment {
 
             manager.addSeries(ApiService.getInstance(getContext()).getLoggedUser().getUsername(), manager.getMappingString("x", "value"));
 
+
             manager.render();
 
             @SuppressLint("SimpleDateFormat")
             SimpleDateFormat jdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
             jdf.setTimeZone(TimeZone.getTimeZone("GMT+2"));
             String date = jdf.format(new Date());
-            String day = date.substring(0,10);
+            String day = date.substring(0, 10);
 
             Optional<DailySteps> today =
                     userSteps.stream()
                             .filter(dailySteps -> dailySteps.getDate().equals(day))
                             .findFirst();
 
-            today.ifPresent(dailySteps -> dailyStepsLabel.setText(getResources().getString(R.string.dailyStepsLabel) + dailySteps.getSteps()));
+
+            today.ifPresent(dailySteps -> dailyStepsLabel.setText(String.valueOf(dailySteps.getSteps())));
 
             int average = 0;
 
-            if(!userSteps.isEmpty()){
-                for(int i = 0; i < 30 && i < userSteps.size(); i++)
+            if (!userSteps.isEmpty()) {
+                for (int i = 0; i < 30 && i < userSteps.size(); i++)
                     average += userSteps.get(i).getSteps();
 
                 average /= Math.min(userSteps.size(), 30);
             }
 
-            averageStepsLabel.setText(getResources().getString(R.string.averageStepsLabel) + average);
-        });
+            averageStepsLabel.setText(String.valueOf(average));
+        };
 
-        return root;
     }
+
+    private Consumer<List<DailySteps>> populateChartRemote() {
+        return (res) -> {
+
+            List<DailySteps> userSteps = res.stream()
+                    .sorted((o1, o2) -> {
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                        LocalDateTime d1 = LocalDate.parse(o1.getDate(), formatter).atStartOfDay();
+                        LocalDateTime d2 = LocalDate.parse(o2.getDate(), formatter).atStartOfDay();
+                        return d1.compareTo(d2);
+                    }).limit(30).collect(Collectors.toList());
+
+            manager.addSeries(ApiService.getInstance(getContext()).getLoggedUser().getUsername(), manager.getMappingString("x", "value"));
+            manager.addSeries("Other Users Average", manager.getMappingString("x", "value2"));
+
+            dailyStepsService.getAllExceptUser(getContext(), otherUsers ->{
+
+                // Fetch steps from all users, sort by day, get average for each day
+
+                TreeMap<String, List<DailySteps>> stepsByDay = new TreeMap<>();
+
+                List<String> dates = otherUsers.stream()
+                        .map(dailySteps -> dailySteps.date)
+                        .distinct()
+                        .collect(Collectors.toList());
+
+                dates.forEach(date -> stepsByDay.put(date, new ArrayList<>()));
+
+                otherUsers.forEach(user ->{
+                    Objects.requireNonNull(stepsByDay.get(user.date)).add(user);
+                });
+
+                TreeMap<String, Double> averageStepsByDay = new TreeMap<>((o1, o2) -> {
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                    LocalDateTime d1 = LocalDate.parse(o1, formatter).atStartOfDay();
+                    LocalDateTime d2 = LocalDate.parse(o2, formatter).atStartOfDay();
+                    return d1.compareTo(d2);
+                });
+
+                for(String key : stepsByDay.keySet()){
+
+                    List<DailySteps> list = stepsByDay.get(key);
+
+                    if(list != null) {
+
+                        OptionalDouble avg = list.stream().mapToInt(d -> d.steps).average();
+
+                        if(avg.isPresent())
+                            averageStepsByDay.put(key, avg.getAsDouble());
+
+                    }
+
+                }
+
+                // For each daily average, if we are within 30 days, find the corresponding value from the userSteps and add as an entry
+
+                if (!averageStepsByDay.isEmpty()) {
+                    averageStepsByDay.forEach((key, val) -> {
+
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                        LocalDateTime now = LocalDateTime.now();
+                        LocalDateTime dateOfAverage = LocalDate.parse(key, formatter).atStartOfDay();
+                        LocalDateTime currentMinus30Days = now.minusDays(30);
+
+                        if(!dateOfAverage.isBefore(currentMinus30Days)) {
+
+                            Integer userStepsToday = null;
+
+                            for(int i = 0; i < userSteps.size(); i++){
+                                if(userSteps.get(i).date.equals(key)){
+                                    userStepsToday = userSteps.get(i).steps;
+                                    break;
+                                }
+                            }
+
+                            manager.addEntry(new DailyStepsDataEntry(key, userStepsToday, val));
+
+                        }
+
+                    });
+                }
+
+                manager.render();
+
+                @SuppressLint("SimpleDateFormat")
+                SimpleDateFormat jdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
+                jdf.setTimeZone(TimeZone.getTimeZone("GMT+2"));
+                String date = jdf.format(new Date());
+                String day = date.substring(0, 10);
+
+                Optional<DailySteps> today =
+                        userSteps.stream()
+                                .filter(dailySteps -> dailySteps.getDate().equals(day))
+                                .findFirst();
+
+
+                today.ifPresent(dailySteps -> dailyStepsLabel.setText(String.valueOf(dailySteps.getSteps())));
+
+                int average = 0;
+
+                if (!userSteps.isEmpty()) {
+                    for (int i = 0; i < 30 && i < userSteps.size(); i++)
+                        average += userSteps.get(i).getSteps();
+
+                    average /= Math.min(userSteps.size(), 30);
+                }
+
+                averageStepsLabel.setText(String.valueOf(average));
+
+            });
+
+        };
+
+    }
+
 }
+
 
 class DailyStepsDataEntry extends ValueDataEntry {
 
@@ -199,18 +330,12 @@ class LineGraphManager<T extends DataEntry> {
         cartesian.legend().fontSize(13d);
         cartesian.legend().padding(0d, 0d, 10d, 0d);
 
+        cartesian.background().fill("#00000000");
+        cartesian.interactivity().hoverMode(HoverMode.BY_X);
+
+        graph.setBackgroundColor("#00000000");
         graph.setChart(cartesian);
 
-    }
-
-}
-
-class CustomDataEntry extends ValueDataEntry {
-
-    CustomDataEntry(String x, Number value, Number value2, Number value3) {
-        super(x, value);
-        setValue("value2", value2);
-        setValue("value3", value3);
     }
 
 }

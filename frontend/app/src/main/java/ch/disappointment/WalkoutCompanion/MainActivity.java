@@ -14,6 +14,7 @@ import android.view.Menu;
 
 import ch.disappointment.WalkoutCompanion.api.ApiService;
 import ch.disappointment.WalkoutCompanion.persistence.DailyStepsDaoService;
+import ch.disappointment.WalkoutCompanion.persistence.DailyStepsRemoteDaoService;
 import ch.disappointment.WalkoutCompanion.persistence.TokensDaoService;
 import ch.disappointment.WalkoutCompanion.persistence.model.DailySteps;
 import ch.disappointment.WalkoutCompanion.service.StepCountService;
@@ -41,7 +42,6 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
     private ConstraintLayout mainLayout;
     private ConstraintLayout fragmentContainer;
     private BottomNavigationView bottomnav;
-    private DailyStepsDaoService<DailySteps> stepsDaoService;
 
     private static final int REQUEST_PERMISSIONS_CODE = 45;
     private final boolean runningQOrLater =
@@ -76,6 +76,32 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         }
 
         createNotificationChannel();
+        populateDB();
+
+    }
+
+
+    void populateDB(){
+
+        DailyStepsRemoteDaoService service = new DailyStepsRemoteDaoService();
+
+        service.insert(this, new DailySteps(50, "2022-12-01"), () -> {});
+        service.insert(this, new DailySteps(23, "2022-12-02"), () -> {});
+        service.insert(this, new DailySteps(50, "2022-12-03"), () -> {});
+        service.insert(this, new DailySteps(23, "2022-12-04"), () -> {});
+        service.insert(this, new DailySteps(54, "2022-12-05"), () -> {});
+        service.insert(this, new DailySteps(34, "2022-12-06"), () -> {});
+        service.insert(this, new DailySteps(12, "2022-12-07"), () -> {});
+        service.insert(this, new DailySteps(34, "2022-12-08"), () -> {});
+        service.insert(this, new DailySteps(53, "2022-12-09"), () -> {});
+        service.insert(this, new DailySteps(50, "2022-12-10"), () -> {});
+        service.insert(this, new DailySteps(87, "2022-12-11"), () -> {});
+        service.insert(this, new DailySteps(0, "2022-12-12"), () -> {});
+        service.insert(this, new DailySteps(45, "2022-12-13"), () -> {});
+        service.insert(this, new DailySteps(45, "2022-12-14"), () -> {});
+        service.insert(this, new DailySteps(34, "2022-12-15"), () -> {});
+        service.insert(this, new DailySteps(90, "2022-12-16"), () -> {});
+
     }
 
     @Override
