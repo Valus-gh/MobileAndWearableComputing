@@ -15,11 +15,11 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/mapFab"
+        android:id="@+id/tracks_fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="560dp"
         android:layout_marginEnd="300dp"
+        android:layout_marginBottom="24dp"
         android:clickable="true"
         android:scaleType="center"
         android:src="@drawable/ic_add_light"
@@ -28,6 +28,5 @@
         app:layout_constraintBottom_toBottomOf="@id/tracksRecyclerView"
         app:layout_constraintEnd_toEndOf="@id/tracksRecyclerView"
         app:layout_constraintStart_toStartOf="@id/tracksRecyclerView"
-        app:layout_constraintTop_toTopOf="@id/tracksRecyclerView"
         app:maxImageSize="32dp" />
 </androidx.constraintlayout.widget.ConstraintLayout>

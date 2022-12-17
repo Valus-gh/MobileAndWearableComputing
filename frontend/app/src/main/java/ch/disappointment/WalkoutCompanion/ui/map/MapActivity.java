@@ -2,19 +2,13 @@ package ch.disappointment.WalkoutCompanion.ui.map;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.content.Context;
+import android.app.AlertDialog;
+import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -24,7 +18,6 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.osmdroid.api.IMapController;
@@ -32,30 +25,61 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
+import org.osmdroid.views.overlay.Polyline;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import ch.disappointment.WalkoutCompanion.R;
+import ch.disappointment.WalkoutCompanion.api.ApiService;
+import ch.disappointment.WalkoutCompanion.persistence.TracksDaoService;
+import ch.disappointment.WalkoutCompanion.persistence.model.Track;
 
 
 public class MapActivity extends AppCompatActivity {
+    public enum OpenModes {
+        VIEW, NEW
+    }
+
+    public static String EXTRA_KEY_MODE = "mode";
+    public static String EXTRA_KEY_TRACK_NAME = "track_name";
+    public static String EXTRA_KEY_TRACK_ID = "track_id";
+
+    /* 2 secs */
+    private static long UPDATE_INTERVAL = 2 * 1000;
+
+    private OpenModes mode;
+    private String trackName;
+    private Long trackId;
+
     private MapViewModel viewModel;
     private FusedLocationProviderClient locationProvider;
 
     private MapView map;
-    private Marker currentLocationMarker;
+    private IMapController controller;
+    private Polyline trackPolyline;
+    private Marker trackStartMarker;
+    private Marker trackEndMarker;
+
     private FloatingActionButton fab;
+
+    private MapLocationListener locationListener;
+    private TracksDaoService tracksDaoService;
 
 
     private static double defaultZoom = 18;
-
-    private long UPDATE_INTERVAL = 10 * 1000;  /* 10 secs */
-    private long FASTEST_INTERVAL = 2000; /* 2 sec */
 
     @SuppressLint("MissingPermission")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_map);
+
+        tracksDaoService = new TracksDaoService(this);
+
+        Intent intent = getIntent();
+        mode = (OpenModes) intent.getSerializableExtra(EXTRA_KEY_MODE);
 
         // retrieve viewModel
         ViewModelProvider provider = new ViewModelProvider(this);
@@ -64,31 +88,90 @@ public class MapActivity extends AppCompatActivity {
         // retrieve map
         map = (MapView) findViewById(R.id.map);
         map.setTileSource(TileSourceFactory.MAPNIK);
+        controller = map.getController();
+        controller.setZoom(defaultZoom);
 
         // setup FAB
         fab = (FloatingActionButton) findViewById(R.id.mapFab);
-        fab.setOnClickListener(view -> {
-
-        });
-
-        // setup the location listeners
-        if(checkLocationPermissions()) {
-            locationProvider = LocationServices.getFusedLocationProviderClient(this);
-            locationProvider.requestLocationUpdates(
-                    new LocationRequest
-                            .Builder(Priority.PRIORITY_HIGH_ACCURACY, UPDATE_INTERVAL)
-                            .build(),
-                    new MapLocationListener(this),
-                    Looper.myLooper()
-            );
-
-            updateLastLocation(this);
+        switch (mode) {
+            case NEW:
+                trackName = intent.getStringExtra(EXTRA_KEY_TRACK_NAME);
+                setupForTracking();
+                break;
+            case VIEW:
+                trackId = intent.getLongExtra(EXTRA_KEY_TRACK_ID, -1);
+                setupForViewing();
         }
 
+        // receive updates for the track and draw them on screen
+        viewModel.track().observe(this, track -> {
+            if (track == null || track.getPoints() == null || track.getPoints().isEmpty())
+                return;
 
-        viewModel.currentLocation().observe(this, this::setMapMarkerPosition);
+            List<Track.TrackNode> points = track.getPoints();
+
+            // draw start marker
+            if (trackStartMarker == null)
+                trackStartMarker = newMarker();
+            trackStartMarker.setPosition(points.get(0).getPoint());
+
+            if (points.size() > 1) {
+                // draw polyline
+                if (trackPolyline == null)
+                    trackPolyline = newPolyline();
+
+                List<GeoPoint> geoPointList = track.getPoints().stream()
+                        .map(Track.TrackNode::getPoint)
+                        .collect(Collectors.toList());
+
+                trackPolyline.setPoints(geoPointList);
+
+                // draw end marker
+                if (trackEndMarker == null)
+                    trackEndMarker = newMarker();
+
+                GeoPoint last = points.get(points.size() - 1).getPoint();
+
+                trackEndMarker.setPosition(last);
+
+                // set position to end marker
+                controller.setCenter(last);
+            }
+        });
+
+        map.invalidate();
     }
 
+    private Marker newMarker() {
+        Marker m = new Marker(map);
+        m.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        map.getOverlayManager().add(m);
+        return m;
+    }
+
+    private Polyline newPolyline() {
+        Polyline p = new Polyline();
+        map.getOverlayManager().add(p);
+        return p;
+    }
+
+    private void setupForTracking() {
+        fab.show();
+        fab.setOnClickListener(view -> {
+            // navigate back to track list
+            tryStopTracking(this::finish);
+        });
+
+        controller.stopPanning();
+
+        startTracking();
+    }
+
+    private void setupForViewing() {
+        Track t = tracksDaoService.getTrack(this, trackId);
+        viewModel.setTrack(t);
+        fab.hide();
+    }
 
     @Override
     public void onResume() {
@@ -110,19 +193,67 @@ public class MapActivity extends AppCompatActivity {
         map.onPause();  //needed for compass, my location overlays, v6.0.0 and up
     }
 
-    private void setMapMarkerPosition(GeoPoint geoPoint){
-        if(this.currentLocationMarker == null) {
-            this.currentLocationMarker = new Marker(map);
-            this.currentLocationMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-            map.getOverlays().add(currentLocationMarker);
-        }
+    private void tryStopTracking(Runnable onOk) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Stop Tracking?");
+        builder.setMessage("This action will stop tracking your movements. Current track will be saved");
 
-        Log.i("LOCATION_UPDATE", geoPoint.toString());
-        this.currentLocationMarker.setPosition(geoPoint);
-        map.invalidate();
+        builder.setPositiveButton("OK", (dialog, which) -> {
+            locationProvider.removeLocationUpdates(locationListener);
+            onOk.run();
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> {
+            dialog.cancel();
+        });
+
+        builder.show();
     }
 
-    private boolean checkLocationPermissions(){
+    @SuppressLint("MissingPermission")
+    private void startTracking() {
+        // create a new track in the db
+        Track t = tracksDaoService.createEmptyTrack(
+                this,
+                ApiService.getInstance(this).getLoggedUser().getUsername(),
+                trackName
+        );
+
+        viewModel.setTrack(t);
+
+        // setup the location listeners
+        if (checkLocationPermissions()) {
+            locationProvider = LocationServices.getFusedLocationProviderClient(this);
+            locationListener = new MapLocationListener(this, this, t.getId());
+            locationProvider.getLastLocation().addOnSuccessListener(location -> {
+                if (location != null)
+                    tracksDaoService.addPoint(this,
+                            t.getId(),
+                            Instant.now(),
+                            new GeoPoint(location.getLatitude(), location.getLongitude())
+                    );
+            });
+            locationProvider.requestLocationUpdates(
+                    new LocationRequest
+                            .Builder(Priority.PRIORITY_HIGH_ACCURACY, UPDATE_INTERVAL)
+                            .build(),
+                    locationListener,
+                    Looper.myLooper()
+            );
+        }
+
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (mode == OpenModes.NEW) {
+            tryStopTracking(super::onBackPressed);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    private boolean checkLocationPermissions() {
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -136,37 +267,5 @@ public class MapActivity extends AppCompatActivity {
         }
 
         return true;
-    }
-
-    private void updateLastLocation(Context ctx) {
-        IMapController controller = map.getController();
-        controller.setZoom(defaultZoom);
-
-        if(checkLocationPermissions()) {
-            @SuppressLint("MissingPermission")
-            Task<Location> task = locationProvider.getLastLocation();
-            task.addOnSuccessListener(location -> {
-                if (location == null) {
-                    Toast t = new Toast(ctx);
-                    t.setText("Your location is unknown");
-                    return;
-                }
-
-                double lat = location.getLatitude();
-                double lon = location.getLongitude();
-                double alt = location.getAltitude();
-                Log.i("LOCATION", "last known location: " + lat + ", " + lon + ", " + alt);
-
-                GeoPoint current = new GeoPoint(lat, lon, alt);
-                controller.setZoom(defaultZoom);
-                controller.setCenter(current);
-            });
-
-            task.addOnFailureListener(error -> {
-                Toast toast = new Toast(ctx);
-                toast.setText(error.toString());
-                toast.show();
-            });
-        }
     }
 }

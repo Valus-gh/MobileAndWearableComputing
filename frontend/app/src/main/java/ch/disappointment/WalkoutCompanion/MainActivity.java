@@ -14,6 +14,7 @@ import android.view.Menu;
 
 import ch.disappointment.WalkoutCompanion.api.ApiService;
 import ch.disappointment.WalkoutCompanion.persistence.DailyStepsDaoService;
+import ch.disappointment.WalkoutCompanion.persistence.DailyStepsLocalDaoService;
 import ch.disappointment.WalkoutCompanion.persistence.DailyStepsRemoteDaoService;
 import ch.disappointment.WalkoutCompanion.persistence.TokensDaoService;
 import ch.disappointment.WalkoutCompanion.persistence.model.DailySteps;

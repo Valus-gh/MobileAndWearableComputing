@@ -23,6 +23,7 @@ public class TracksDaoService extends SQLiteOpenHelper {
     public static final String TRACKS_TABLE_NAME = "user_tracks";
     public static final String TRACKS_KEY_ID = "id";
     public static final String TRACKS_KEY_USER = "user";
+    public static final String TRACKS_KEY_NAME = "name";
 
     public static final String POINTS_TABLE_NAME = "geopoints";
     public static final String POINTS_KEY_TIME = "time";
@@ -33,6 +34,7 @@ public class TracksDaoService extends SQLiteOpenHelper {
     public static final String CREATE_TRACKS_TABLE_SQL = "CREATE TABLE IF NOT EXISTS "
             + TRACKS_TABLE_NAME + " ("
             + TRACKS_KEY_ID + " INTEGER PRIMARY KEY, "
+            + TRACKS_KEY_NAME + " TEXT, "
             + TRACKS_KEY_USER + " TEXT);";
 
     public static final String CREATE_POINTS_TABLE_SQL = "CREATE TABLE IF NOT EXISTS "
@@ -40,6 +42,7 @@ public class TracksDaoService extends SQLiteOpenHelper {
             + POINTS_KEY_TIME + " INTEGER PRIMARY KEY, "
             + POINTS_KEY_LAT + " REAL, "
             + POINTS_KEY_LON + " REAL, "
+            + POINTS_FK_TRACK + " INTEGER, "
             + "FOREIGN KEY (" + POINTS_FK_TRACK + ") references " + TRACKS_TABLE_NAME + "(" + TRACKS_KEY_ID + ") );";
 
     public TracksDaoService(Context context) {
@@ -67,38 +70,55 @@ public class TracksDaoService extends SQLiteOpenHelper {
         TracksDaoService service = new TracksDaoService(ctx);
         SQLiteDatabase database = service.getWritableDatabase();
 
-        String selection = "id=?";
+        String trackSelection = "id=?";
+        String[] trackSelectionArgs = new String[]{trackId.toString()};
+        String[] trackColumns = new String[]{
+                TRACKS_KEY_NAME
+        };
 
-        String[] selectionArgs = new String[]{trackId.toString()};
-        String[] columns = new String[]{
+        Cursor tracksCursor = database.query(TRACKS_TABLE_NAME,
+                trackColumns, trackSelection, trackSelectionArgs,
+                null, null, null);
+
+        if(tracksCursor.getCount() == 0){
+            return null;
+        }
+        tracksCursor.moveToFirst();
+        String trackName = tracksCursor.getString(0);
+        tracksCursor.close();
+
+        String pointsSelection = "track_id=?";
+        String[] pointsSelectionArgs = new String[]{trackId.toString()};
+        String[] pointsColumns = new String[]{
                 POINTS_KEY_LAT,
                 POINTS_KEY_LON,
                 POINTS_KEY_TIME
         };
 
-        Cursor cursor = database.query(
+        Cursor pointsCursor = database.query(
                 POINTS_TABLE_NAME,
-                columns, selection, selectionArgs,
+                pointsColumns, pointsSelection, pointsSelectionArgs,
                 null, null, null);
 
         Track t = new Track();
         ArrayList<Track.TrackNode> points = new ArrayList<>();
-        if (cursor.getCount() != 0) {
-            cursor.moveToFirst();
-            for (int i = 0; i < cursor.getCount(); i++) {
-                double lat = cursor.getDouble(0);
-                double lon = cursor.getDouble(1);
-                long time = cursor.getLong(2);
+        if (pointsCursor.getCount() != 0) {
+            pointsCursor.moveToFirst();
+            for (int i = 0; i < pointsCursor.getCount(); i++) {
+                double lat = pointsCursor.getDouble(0);
+                double lon = pointsCursor.getDouble(1);
+                long time = pointsCursor.getLong(2);
 
                 GeoPoint gp = new GeoPoint(lat, lon);
                 Track.TrackNode node = new Track.TrackNode();
                 node.setPoint(gp);
                 node.setTime(Instant.ofEpochSecond(time));
                 points.add(node);
+                pointsCursor.moveToNext();
             }
         }
 
-        cursor.close();
+        pointsCursor.close();
         database.close();
 
         t.setPoints(points
@@ -108,11 +128,12 @@ public class TracksDaoService extends SQLiteOpenHelper {
         );
 
         t.setId(trackId);
+        t.setName(trackName);
 
         return t;
     }
 
-    public List<Track> listTracks(Context ctx, String username) {
+    public ArrayList<Track> listTracks(Context ctx, String username) {
         TracksDaoService service = new TracksDaoService(ctx);
         SQLiteDatabase database = service.getWritableDatabase();
 
@@ -135,6 +156,7 @@ public class TracksDaoService extends SQLiteOpenHelper {
                 long trackId = cursor.getInt(0);
                 Track t = this.getTrack(ctx, trackId);
                 tracks.add(t);
+                cursor.moveToNext();
             }
         }
 
@@ -145,16 +167,13 @@ public class TracksDaoService extends SQLiteOpenHelper {
     }
 
     // returns the ID
-    public Track createEmptyTrack(Context ctx, String username) {
+    public Track createEmptyTrack(Context ctx, String username, String trackName) {
         TracksDaoService service = new TracksDaoService(ctx);
         SQLiteDatabase database = service.getWritableDatabase();
 
-        String selection = "user=?";
-
-        String[] selectionArgs = new String[]{username};
-
         ContentValues values = new ContentValues();
         values.put(TRACKS_KEY_USER, username);
+        values.put(TRACKS_KEY_NAME, trackName);
 
         long id = database.insert(TRACKS_TABLE_NAME, null, values);
 
@@ -162,7 +181,7 @@ public class TracksDaoService extends SQLiteOpenHelper {
         return getTrack(ctx, id);
     }
 
-    public void addPoint(Context ctx, Integer trackId, Instant now, GeoPoint gp) {
+    public void addPoint(Context ctx, Long trackId, Instant now, GeoPoint gp) {
         TracksDaoService service = new TracksDaoService(ctx);
         SQLiteDatabase database = service.getWritableDatabase();
 

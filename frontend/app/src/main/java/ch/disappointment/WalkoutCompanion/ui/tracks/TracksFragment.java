@@ -1,35 +1,44 @@
 package ch.disappointment.WalkoutCompanion.ui.tracks;
 
-import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
+import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
-import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.sql.Date;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import java.util.Date;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.function.Consumer;
 
 import ch.disappointment.WalkoutCompanion.R;
+import ch.disappointment.WalkoutCompanion.api.ApiService;
+import ch.disappointment.WalkoutCompanion.persistence.TracksDaoService;
 import ch.disappointment.WalkoutCompanion.persistence.model.Track;
 import ch.disappointment.WalkoutCompanion.ui.map.MapActivity;
-import ch.disappointment.WalkoutCompanion.ui.map.MapViewModel;
 
 public class TracksFragment extends Fragment {
     private View root;
     private RecyclerView recyclerView;
+    private FloatingActionButton floatingActionButton;
+    private static int MAP_INTENT_REQ_CODE = 49;
+    private TracksViewModel viewModel;
+    private TracksDaoService tracksDaoService;
 
     @Nullable
     @Override
@@ -43,14 +52,59 @@ public class TracksFragment extends Fragment {
         recyclerView.setAdapter(new TracksAdapter(requireActivity()));
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
 
+        floatingActionButton = root.findViewById(R.id.tracks_fab);
+        floatingActionButton.setOnClickListener(view -> {
+            showDialog((trackName) -> {
+                Intent mapIntent = new Intent(requireActivity(), MapActivity.class);
+                mapIntent.putExtra(MapActivity.EXTRA_KEY_TRACK_NAME, trackName);
+                mapIntent.putExtra(MapActivity.EXTRA_KEY_TRACK_ID, (String) null);
+                mapIntent.putExtra(MapActivity.EXTRA_KEY_MODE, MapActivity.OpenModes.NEW);
+                startActivityForResult(mapIntent, MAP_INTENT_REQ_CODE);
+            }, null);
+        });
+
         ViewModelProvider provider = new ViewModelProvider(requireActivity());
-        TracksViewModel viewModel = provider.get(TracksViewModel.class);
+        viewModel = provider.get(TracksViewModel.class);
+
+        tracksDaoService = new TracksDaoService(requireContext());
+        ArrayList<Track> trackList = tracksDaoService.listTracks(requireContext(), ApiService.getInstance(requireContext()).getLoggedUser().getUsername());
+        viewModel.setTracks(trackList);
 
         viewModel.getTracks().observe(requireActivity(), tracks -> {
             recyclerView.getAdapter().notifyDataSetChanged();
         });
 
         return root;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        tracksDaoService = new TracksDaoService(requireContext());
+        ArrayList<Track> trackList = tracksDaoService.listTracks(requireContext(), ApiService.getInstance(requireContext()).getLoggedUser().getUsername());
+        viewModel.setTracks(trackList);
+    }
+
+    private void showDialog(Consumer<String> onOk, Runnable okCancel) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Title");
+
+        final EditText input = new EditText(requireContext());
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        builder.setView(input);
+
+        builder.setPositiveButton("OK", (dialog, which) -> {
+            String newTrackName = input.getText().toString();
+            onOk.accept(newTrackName);
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> {
+            dialog.cancel();
+            if (okCancel != null)
+                okCancel.run();
+        });
+
+        builder.show();
     }
 
 }
@@ -102,9 +156,11 @@ class TracksAdapter extends RecyclerView.Adapter<TracksAdapter.ViewHolder> {
 
             Track t = viewModel.getTracks().getValue().get(Long.valueOf(index).intValue());
 
-            Intent myIntent = new Intent(activity, MapActivity.class);
-            myIntent.putExtra("trackId", t.getId());
-            activity.startActivity(myIntent);
+            Intent mapIntent = new Intent(activity, MapActivity.class);
+            mapIntent.putExtra(MapActivity.EXTRA_KEY_TRACK_NAME, t.getName());
+            mapIntent.putExtra(MapActivity.EXTRA_KEY_TRACK_ID, t.getId());
+            mapIntent.putExtra(MapActivity.EXTRA_KEY_MODE, MapActivity.OpenModes.VIEW);
+            activity.startActivity(mapIntent);
         });
 
         return holder;
@@ -119,15 +175,21 @@ class TracksAdapter extends RecyclerView.Adapter<TracksAdapter.ViewHolder> {
         Track t = viewModel.getTracks().getValue().get(position);
 
         Instant start = t.startsAt();
-        Instant end = t.startsAt();
+        Instant end = t.endsAt();
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd MM yyyy hh:mm");
 
-        String startText = dateFormat.format(Date.from(start));
-        String endText = dateFormat.format(Date.from(end));
+        String startText = null;
+        String endText = null;
+        String description = null;
 
-        String name = "From: " + startText + "\n" + "To: " + endText;
+        if (start != null && end != null) {
+            startText = dateFormat.format(Date.from(start));
+            endText = dateFormat.format(Date.from(end));
+            description = "From: " + startText + "\n" + "To: " + endText;
+            // set description
+        }
 
-        viewHolder.getTextView().setText(name);
+        viewHolder.getTextView().setText(t.getName());
     }
 
     // Return the size of your dataset (invoked by the layout manager)

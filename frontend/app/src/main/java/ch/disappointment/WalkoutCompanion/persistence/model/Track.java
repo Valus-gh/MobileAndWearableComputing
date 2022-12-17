@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.List;
 
 public class Track {
+
     public static class TrackNode {
         private GeoPoint point;
         private Instant time;
@@ -30,9 +31,10 @@ public class Track {
         }
     }
 
-    private Long id;
 
+    private Long id;
     private List<TrackNode> points;
+    private String name;
 
     public void setPoints(List<TrackNode> points) {
         this.points = points;
@@ -53,6 +55,14 @@ public class Track {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public Instant startsAt() {
