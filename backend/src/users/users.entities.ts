@@ -11,4 +11,7 @@ export class User {
 
 	@OneToMany((type) => DailySteps, (dailySteps) => dailySteps.user)
 	dailySteps: Promise<DailySteps[]>;
+
+	@Column()
+	goal: number;
 }

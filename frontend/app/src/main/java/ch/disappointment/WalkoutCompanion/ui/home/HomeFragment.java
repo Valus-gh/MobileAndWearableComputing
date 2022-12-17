@@ -74,6 +74,10 @@ public class HomeFragment extends Fragment {
             StepCountService.dailySteps.date = dailySteps.date;
         }));
 
+        stepsDaoService.getGoal(getContext(), goal -> {
+            StepCountService.goal = goal;
+        });
+
         updateHandler = new Handler();
         updateHandler.post(updateStepsView);
 
@@ -85,6 +89,7 @@ public class HomeFragment extends Fragment {
         public void run() {
             stepsCountTextView.setText(String.valueOf(StepCountService.dailySteps.getSteps()));
             stepsCountProgressBar.setProgress(StepCountService.dailySteps.getSteps());
+            stepsCountProgressBar.setMax(StepCountService.goal);
             updateHandler.postDelayed(this, 500);
         }
     };

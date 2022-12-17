@@ -89,6 +89,22 @@ public class DailyStepsRemoteDaoService implements DailyStepsDaoService<DailySte
                 });
     }
 
+    @Override
+    public void setGoal(Context context, int goal, Runnable onDone) {
+        ApiService.getInstance(context).setDailyGoal(goal, (arr) -> onDone.run(),
+                (err) -> {
+                    this.catchError(context, err);
+                    onDone.run();
+                });
+    }
+
+    @Override
+    public void getGoal(Context context, Consumer<Integer> onResult) {
+        ApiService.getInstance(context).getDailyGoal(onResult, (err) -> {
+            this.catchError(context, err);
+        });
+    }
+
     private void catchError(Context ctx, ApiException err) {
         Toast.makeText(ctx, err.getMessage(), Toast.LENGTH_LONG).show();
     }

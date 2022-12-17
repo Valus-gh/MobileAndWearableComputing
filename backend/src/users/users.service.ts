@@ -20,6 +20,7 @@ export class UsersService {
 		const u = this.userRepo.create();
 		u.password = credentials.password;
 		u.username = credentials.username;
+		u.goal = 4000;
 		return await this.userRepo.save(u);
 	}
 
@@ -35,5 +36,14 @@ export class UsersService {
 		if (!user) return null;
 
 		return user;
+	}
+
+	async setUserGoal(user: User, goal: number) {
+		user.goal = goal;
+		return await this.userRepo.save(user);
+	}
+
+	async getUserGoal(user: User) {
+		return user.goal;
 	}
 }

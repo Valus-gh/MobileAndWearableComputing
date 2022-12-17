@@ -11,6 +11,7 @@ import com.android.volley.toolbox.Volley;
 import ch.disappointment.WalkoutCompanion.BuildConfig;
 import ch.disappointment.WalkoutCompanion.api.exception.ApiException;
 import ch.disappointment.WalkoutCompanion.api.model.CredentialsDto;
+import ch.disappointment.WalkoutCompanion.api.model.DailyGoal;
 import ch.disappointment.WalkoutCompanion.api.model.DailyStepsListDto;
 import ch.disappointment.WalkoutCompanion.api.model.TokenDto;
 import ch.disappointment.WalkoutCompanion.api.requests.AuthenticatedJsonRequest;
@@ -35,6 +36,7 @@ public class ApiService {
     private boolean isLocal = false;
     private boolean logged = false;
     private User loggedUser;
+    private int currentGoal;
 
     private ApiService(Context ctx) {
         queue = Volley.newRequestQueue(ctx);
@@ -50,7 +52,7 @@ public class ApiService {
 
     private void forwardError(VolleyError error, Consumer<ApiException> onError) {
         int status = error.networkResponse != null ? error.networkResponse.statusCode : 0;
-        if(error.getMessage() != null)
+        if (error.getMessage() != null)
             onError.accept(new ApiException(error.getMessage(), status, error));
         else
             onError.accept(new ApiException(error.toString(), status, error));
@@ -131,7 +133,7 @@ public class ApiService {
         isLocal = local;
     }
 
-    public void setUser(User user){
+    public void setUser(User user) {
         loggedUser = user;
     }
 
@@ -178,5 +180,30 @@ public class ApiService {
         }, error -> this.forwardError(error, onError));
 
         queue.add(request);
+    }
+
+    public void getDailyGoal(Consumer<Integer> onSuccess, Consumer<ApiException> onError) {
+        AuthenticatedJsonRequest request = new AuthenticatedJsonRequest(Request.Method.GET, baseUrl + "goal", loggedUser.getToken(), null, response -> {
+            DailyGoal saved = gson.fromJson(response.toString(), DailyGoal.class);
+            onSuccess.accept(saved.getGoal());
+        }, error -> this.forwardError(error, onError));
+
+        queue.add(request);
+    }
+
+    public void setDailyGoal(Integer dailyGoal, Consumer<Integer> onSuccess, Consumer<ApiException> onError) {
+        AuthenticatedStringRequest request = new AuthenticatedStringRequest(Request.Method.POST,
+                baseUrl + "goal?goal=" + dailyGoal, loggedUser.getToken(), (response -> {
+        }), null);
+
+        queue.add(request);
+    }
+
+    public int getCurrentGoal() {
+        return currentGoal;
+    }
+
+    public void setCurrentGoal(int currentGoal) {
+        this.currentGoal = currentGoal;
     }
 }

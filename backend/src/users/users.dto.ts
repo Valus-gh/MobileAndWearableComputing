@@ -5,3 +5,7 @@ export class CredentialsDto {
 export class TokensDto {
 	constructor(public accessToken: string) {}
 }
+
+export class UserGoalDto {
+	constructor(public goal: number) {}
+}

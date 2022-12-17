@@ -21,4 +21,6 @@ public interface DailyStepsDaoService<T extends DailySteps> {
 
     void delete(Context context, T record, Runnable onDone);
 
+    void setGoal(Context context, int goal, Runnable onDone);
+    void getGoal(Context context, Consumer<Integer> onResult);
 }

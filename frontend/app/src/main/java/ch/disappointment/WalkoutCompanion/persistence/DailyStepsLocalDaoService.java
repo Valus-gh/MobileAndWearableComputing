@@ -25,6 +25,10 @@ public class DailyStepsLocalDaoService extends SQLiteOpenHelper implements Daily
     public static final String KEY_STEPS = "steps";
     public static final String KEY_DAY = "day";
 
+    public static final String GOAL_TABLE_NAME = "daily_user_goal";
+    public static final String GOAL_ID = "user";
+    public static final String GOAL_GOAL = "goal";
+
     public static final String CREATE_TABLE_SQL = "CREATE TABLE IF NOT EXISTS "
             + TABLE_NAME + " ("
             + KEY_ID + " INTEGER PRIMARY KEY, "
@@ -32,17 +36,24 @@ public class DailyStepsLocalDaoService extends SQLiteOpenHelper implements Daily
             + KEY_DAY + " TEXT, "
             + KEY_STEPS + " INTEGER);";
 
+    public static final String CREATE_GOAL_TABLE_SQL = "CREATE TABLE IF NOT EXISTS "
+            + GOAL_TABLE_NAME + " ("
+            + GOAL_ID + " TEXT PRIMARY KEY, "
+            + GOAL_GOAL + " INTEGER);";
+
     public DailyStepsLocalDaoService(Context context){
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
+        db.execSQL(CREATE_GOAL_TABLE_SQL);
         db.execSQL(CREATE_TABLE_SQL);
     }
 
     @Override
     public void onOpen(SQLiteDatabase db) {
+        db.execSQL(CREATE_GOAL_TABLE_SQL);
         db.execSQL(CREATE_TABLE_SQL);
     }
 
@@ -239,5 +250,73 @@ public class DailyStepsLocalDaoService extends SQLiteOpenHelper implements Daily
         database.close();
 
         onDone.run();
+    }
+
+    @Override
+    public void setGoal(Context context, int goal, Runnable onDone) {
+        DailyStepsLocalDaoService service = new DailyStepsLocalDaoService(context);
+        SQLiteDatabase database = service.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(GOAL_ID, ApiService.getInstance(context).getLoggedUser().getUsername());
+        values.put(GOAL_GOAL, goal);
+
+        String[] columns = new String[]{
+                GOAL_GOAL
+        };
+
+        String selection = "user=?";
+
+        String[] selectionArgs = new String[]{
+                ApiService.getInstance(context).getLoggedUser().getUsername()
+        };
+
+        Cursor c = database.query(GOAL_TABLE_NAME, columns, selection, selectionArgs, null, null, null);
+
+        if(c.getCount() == 0){
+            database.insert(GOAL_TABLE_NAME, null, values);
+        }else{
+            database.update(GOAL_TABLE_NAME, values, selection, selectionArgs);
+        }
+
+        c.close();
+        database.close();
+
+        onDone.run();
+    }
+
+    @Override
+    public void getGoal(Context context, Consumer<Integer> onResult) {
+        DailyStepsLocalDaoService service = new DailyStepsLocalDaoService(context);
+        SQLiteDatabase database = service.getWritableDatabase();
+
+        String[] columns = new String[]{
+                GOAL_GOAL
+        };
+
+        String selection = "user=?";
+
+        String[] selectionArgs = new String[]{
+                ApiService.getInstance(context).getLoggedUser().getUsername()
+        };
+
+        Cursor cursor = database.query(
+                GOAL_TABLE_NAME,
+                columns, selection, selectionArgs,
+                null, null, null);
+
+        if(cursor.getCount() == 0) {
+            onResult.accept(4000);
+            return;
+        }
+
+        cursor.moveToFirst();
+
+        int row = cursor.getInt(0);
+
+        cursor.close();
+        database.close();
+
+        onResult.accept(row);
     }
 }

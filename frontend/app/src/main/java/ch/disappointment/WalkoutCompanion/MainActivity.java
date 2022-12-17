@@ -2,15 +2,19 @@ package ch.disappointment.WalkoutCompanion;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.text.InputType;
 import android.view.MenuItem;
 import android.view.Menu;
+import android.widget.EditText;
 
 import ch.disappointment.WalkoutCompanion.api.ApiService;
 import ch.disappointment.WalkoutCompanion.persistence.DailyStepsDaoService;
@@ -23,6 +27,7 @@ import ch.disappointment.WalkoutCompanion.ui.home.HomeFragment;
 import ch.disappointment.WalkoutCompanion.ui.report.ReportFragment;
 import ch.disappointment.WalkoutCompanion.ui.tracks.TracksFragment;
 
+import com.google.android.gms.common.api.Api;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.annotation.NonNull;
@@ -51,7 +56,6 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
 
         setContentView(R.layout.activity_main);
@@ -77,8 +81,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         }
 
         createNotificationChannel();
-        populateDB();
-
+        // populateDB();
     }
 
 
@@ -119,6 +122,30 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
             startActivity(loginActivityIntent);
 
             return true;
+        } else if(item.getItemId() == R.id.action_set_goal) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Change goal");
+            builder.setMessage("Insert your new goal:");
+
+            final EditText input = new EditText(this);
+            input.setInputType(InputType.TYPE_CLASS_NUMBER);
+            builder.setView(input);
+
+            builder.setPositiveButton("OK", (dialog, which) -> {
+                int goal = Integer.parseInt(input.getText().toString());
+
+                if(ApiService.getInstance(this).isLocal()){
+                    new DailyStepsLocalDaoService(this).setGoal(this, goal, ()->{});
+                }else{
+                    new DailyStepsRemoteDaoService().setGoal(this, goal, ()->{});
+                }
+
+                StepCountService.goal = goal;
+            });
+
+            builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+
+            builder.show();
         }
 
         return false;

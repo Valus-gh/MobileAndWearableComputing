@@ -37,6 +37,7 @@ public class StepCountService extends Service {
 
     public static boolean RUNNING;
     public static DailySteps dailySteps;
+    public static int goal = 4000;
 
     public static DailyStepsDaoService<DailySteps> dailyStepsService;
 

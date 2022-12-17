@@ -36,6 +36,7 @@
     <string name="use_local_btn_text"> Use Local storage </string>
     <string name="action_logout">Logout</string>
     <string name="element_placeholder">From: 01 01 1970 15:45 \n To:  01 01 1970 16:45</string>
+    <string name="action_set_goal">Change goal</string>
 
 </resources>
 
