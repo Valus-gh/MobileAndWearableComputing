@@ -27,6 +27,7 @@ public class HomeFragment extends Fragment {
 
     // Text view and Progress Bar variables
     public TextView stepsCountTextView;
+    public TextView goalTextView;
     public ProgressBar stepsCountProgressBar;
     public Button toggleServiceButton;
 
@@ -41,6 +42,7 @@ public class HomeFragment extends Fragment {
         this.stepsCountTextView = root.findViewById(R.id.stepsCount);
         this.stepsCountProgressBar = root.findViewById(R.id.progressBar);
         this.toggleServiceButton = root.findViewById(R.id.startServiceBtn);
+        this.goalTextView = root.findViewById(R.id.goal_text_view);
 
         if(StepCountService.RUNNING)
             this.toggleServiceButton.setText(getText(R.string.stop_service_button_text));
@@ -90,6 +92,7 @@ public class HomeFragment extends Fragment {
             stepsCountTextView.setText(String.valueOf(StepCountService.dailySteps.getSteps()));
             stepsCountProgressBar.setProgress(StepCountService.dailySteps.getSteps());
             stepsCountProgressBar.setMax(StepCountService.goal);
+            goalTextView.setText("Goal: " + StepCountService.goal);
             updateHandler.postDelayed(this, 500);
         }
     };

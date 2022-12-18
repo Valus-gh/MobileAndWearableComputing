@@ -73,7 +73,6 @@ public class ReportFragment extends Fragment {
         else
             dailyStepsService = new DailyStepsRemoteDaoService();
 
-        //TODO setup chart
 
         userStepsGraph.setProgressBar(root.findViewById(R.id.loadingBar));
 

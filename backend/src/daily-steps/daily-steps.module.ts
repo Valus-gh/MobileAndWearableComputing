@@ -9,5 +9,6 @@ import { DailyStepsService } from './daily-steps.service';
 	controllers: [DailyStepsController],
 	imports: [TypeOrmModule.forFeature([DailySteps]), UsersModule],
 	providers: [DailyStepsService],
+	exports: [DailyStepsService],
 })
 export class DailyStepsModule {}
