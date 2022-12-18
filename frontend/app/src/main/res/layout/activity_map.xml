@@ -28,7 +28,7 @@
         android:clickable="true"
         android:scaleType="center"
         android:src="@drawable/ic_baseline_stop_24"
-        app:backgroundTint="@color/colorPrimary"
+        app:backgroundTint="@color/colorAccent"
         app:fabSize="auto"
         app:layout_constraintBottom_toBottomOf="@id/map"
         app:layout_constraintEnd_toEndOf="@id/map"

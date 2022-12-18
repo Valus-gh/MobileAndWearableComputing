@@ -21,6 +21,7 @@ import com.anychart.enums.HoverMode;
 import com.anychart.enums.MarkerType;
 import com.anychart.enums.TooltipPositionMode;
 import com.anychart.enums.Anchor;
+import com.anychart.graphics.vector.Fill;
 import com.anychart.graphics.vector.Stroke;
 
 import ch.disappointment.WalkoutCompanion.R;
@@ -117,8 +118,7 @@ public class ReportFragment extends Fragment {
                 }
             }
 
-            manager.addSeries(ApiService.getInstance(getContext()).getLoggedUser().getUsername(), manager.getMappingString("x", "value"));
-
+            manager.addSeries(ApiService.getInstance(getContext()).getLoggedUser().getUsername(), manager.getMappingString("x", "value"), "#FFC107");
 
             manager.render();
 
@@ -165,8 +165,8 @@ public class ReportFragment extends Fragment {
                         return d1.compareTo(d2);
                     }).skip(res.size()-30).collect(Collectors.toList());
 
-            manager.addSeries(ApiService.getInstance(getContext()).getLoggedUser().getUsername(), manager.getMappingString("x", "value"));
-            manager.addSeries("Other Users Average", manager.getMappingString("x", "value2"));
+            manager.addSeries(ApiService.getInstance(getContext()).getLoggedUser().getUsername(), manager.getMappingString("x", "value"), "#FFC107");
+            manager.addSeries("Other Users Average", manager.getMappingString("x", "value2"), "#E64A19");
 
             dailyStepsService.getAllExceptUser(getContext(), otherUsers ->{
 
@@ -315,9 +315,10 @@ class LineGraphManager<T extends DataEntry> {
         return set.mapAs("{ x: '" + x + "', value: '" + value + "' }");
     }
 
-    public void addSeries(String name, Mapping mapping) {
+    public void addSeries(String name, Mapping mapping, String color) {
         Line series = cartesian.line(mapping);
         series.name(name);
+        series.stroke(color);
         series.hovered().markers().enabled(true);
         series.hovered().markers()
                 .type(MarkerType.CIRCLE)
