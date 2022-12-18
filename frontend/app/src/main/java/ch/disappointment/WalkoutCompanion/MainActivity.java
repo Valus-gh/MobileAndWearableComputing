@@ -192,10 +192,17 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, int[] grantResults) {
         ArrayList<String> permissionsToRequest = new ArrayList<>(Arrays.asList(permissions).subList(0, grantResults.length));
         if (permissionsToRequest.size() > 0) {
-            ActivityCompat.requestPermissions(
-                    this,
-                    permissionsToRequest.toArray(new String[0]),
-                    REQUEST_PERMISSIONS_CODE);
+
+            for(String p : permissions) {
+                if (ContextCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED) {
+
+                    ActivityCompat.requestPermissions(
+                            this,
+                            permissionsToRequest.toArray(new String[0]),
+                            REQUEST_PERMISSIONS_CODE);
+
+                }
+            }
         }
     }
 

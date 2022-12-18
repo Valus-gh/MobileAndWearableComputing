@@ -1,5 +1,10 @@
 package ch.disappointment.WalkoutCompanion.persistence.model;
 
+/**
+ * Model for representing an instance of a user's daily activity.
+ * Given a date (yyyy-MM-dd), the variable steps indicates how many steps the user has
+ * walked on said day.
+ */
 public class DailySteps {
 
     public int steps;

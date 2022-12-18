@@ -48,6 +48,12 @@ import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+/**
+ * Represents the report fragment that showcases user-to-userbase comparisons.
+ *
+ * Uses the AnyChart library 'com.github.AnyChart:AnyChart-Android:1.1.2'
+ */
+
 public class ReportFragment extends Fragment {
 
     private AnyChartView userStepsGraph;
@@ -89,6 +95,11 @@ public class ReportFragment extends Fragment {
         return root;
     }
 
+
+    /**
+     * Populates the line chart with the user's data
+     * @return the function executed once the database has fetched remote data
+     */
     private Consumer<List<DailySteps>> populateChartLocal(){
         return (res) ->{
             List<DailySteps> userSteps = res.stream()
@@ -139,6 +150,10 @@ public class ReportFragment extends Fragment {
 
     }
 
+    /**
+     * Populates the line chart with the user's data, compared with the average of the userbase
+     * @return the function executed once the database has fetched remote data
+     */
     private Consumer<List<DailySteps>> populateChartRemote() {
         return (res) -> {
 
@@ -255,7 +270,9 @@ public class ReportFragment extends Fragment {
 
 }
 
-
+/**
+ * Auxiliary class to represent a DailySteps instance within the chart
+ */
 class DailyStepsDataEntry extends ValueDataEntry {
 
     public DailyStepsDataEntry(String x, Number userValue, Number meanValue) {
@@ -264,6 +281,10 @@ class DailyStepsDataEntry extends ValueDataEntry {
     }
 }
 
+/**
+ * Auxiliary class to manage an instance of a line chart.
+ * @param <T>
+ */
 class LineGraphManager<T extends DataEntry> {
 
     AnyChartView graph;

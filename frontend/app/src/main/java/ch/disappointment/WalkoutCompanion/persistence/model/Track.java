@@ -8,6 +8,10 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Model for representing a track, a set of Geopoints which can be drawn onto the MapFragment.
+ * Each track has a start and an end.
+ */
 public class Track {
 
     public static class TrackNode {

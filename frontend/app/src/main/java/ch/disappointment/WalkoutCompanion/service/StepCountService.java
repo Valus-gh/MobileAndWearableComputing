@@ -33,6 +33,10 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.TimeZone;
 
+/**
+ * Service which manages the start and stop of the SensorEventListener.
+ * Sends notifications at different states.
+ */
 public class StepCountService extends Service {
 
     public static boolean RUNNING;
@@ -128,7 +132,10 @@ public class StepCountService extends Service {
 
 }
 
-// Sensor event listener
+/**
+ * Step Detector sensor implementation, updates the local and remote databases every time a new step is detected.
+ * At the turn of a new day, creates a new record.
+ */
 class StepCounterListener implements SensorEventListener {
 
     public Context context;
@@ -177,7 +184,6 @@ class StepCounterListener implements SensorEventListener {
         // If new day, update database
         if (!Objects.equals(day, old)) {
 
-            //TODO update database, new day
             StepCountService.dailySteps.steps = (int) step;
 
             Log.d("DAILY STEPS UPDATE", "Steps: " + StepCountService.dailySteps);

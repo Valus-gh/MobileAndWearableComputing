@@ -1,5 +1,8 @@
 package ch.disappointment.WalkoutCompanion.persistence.model;
 
+/**
+ * Model for representing an instance of the logged-in user's username and login token.
+ */
 public class User {
     private String username;
     private String token;

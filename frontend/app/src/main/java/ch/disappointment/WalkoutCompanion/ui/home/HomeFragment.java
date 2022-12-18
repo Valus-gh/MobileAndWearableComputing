@@ -23,6 +23,13 @@ import ch.disappointment.WalkoutCompanion.persistence.DailyStepsRemoteDaoService
 import ch.disappointment.WalkoutCompanion.persistence.model.DailySteps;
 import ch.disappointment.WalkoutCompanion.service.StepCountService;
 
+/**
+ * Default fragment after login, shows the current step count and lets the user choose when to
+ * start and stop the step detector.
+ * Auto updates the textview and progressbar related to the step count every second.
+ * Uses remote or local db services to fetch step count.
+ */
+
 public class HomeFragment extends Fragment {
 
     // Text view and Progress Bar variables
