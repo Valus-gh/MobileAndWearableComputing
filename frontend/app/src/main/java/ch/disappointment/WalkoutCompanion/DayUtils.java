@@ -6,6 +6,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
+/**
+ * Returns the current date in the format "yyyy-MM-dd"
+ */
 public class DayUtils {
     public static String getCurrentDay(){
         @SuppressLint("SimpleDateFormat")

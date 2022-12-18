@@ -7,6 +7,11 @@ import ch.disappointment.WalkoutCompanion.persistence.model.DailySteps;
 import java.util.List;
 import java.util.function.Consumer;
 
+/**
+ * This interface defines a common design to store daily steps data.
+ * It can be implemented to add a new storage type to the application
+ * @param <T> Source Datatype
+ */
 public interface DailyStepsDaoService<T extends DailySteps> {
 
     void get(Context context, String day, Consumer<T> onResult);

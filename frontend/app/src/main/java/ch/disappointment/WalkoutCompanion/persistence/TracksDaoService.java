@@ -16,6 +16,9 @@ import java.util.stream.Collectors;
 
 import ch.disappointment.WalkoutCompanion.persistence.model.Track;
 
+/**
+ * SQLite storage used to save user tracks
+ */
 public class TracksDaoService extends SQLiteOpenHelper {
     private static final int DATABASE_VERSION = 1;
     private static final String DATABASE_NAME = "walkout_companion";

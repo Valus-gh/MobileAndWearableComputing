@@ -14,6 +14,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
+/**
+ * Implementation of DailyStepsDaoService that stores data remotely,
+ * using the ApiService as a storage
+ */
 public class DailyStepsRemoteDaoService implements DailyStepsDaoService<DailySteps> {
     @Override
     public void get(Context context, String day, Consumer<DailySteps> onResult) {

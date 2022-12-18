@@ -16,6 +16,9 @@ import ch.disappointment.WalkoutCompanion.api.model.CredentialsDto;
 import ch.disappointment.WalkoutCompanion.persistence.TokensDaoService;
 import ch.disappointment.WalkoutCompanion.persistence.model.User;
 
+/**
+ * Activity that handles the login, it's the first activity that is started
+ */
 public class LoginActivity extends AppCompatActivity {
     private EditText inputPassword;
     private EditText inputUsername;
@@ -26,6 +29,8 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        // Fetch the last user, and if there is one, check if the token is still valid
+        // if it is, start the main activity with the logged user
         tokensDaoService = new TokensDaoService(this);
         tokensDaoService.getLastUserExcept(this, "LOCAL_USER", user -> {
             if (user != null) {
@@ -46,6 +51,7 @@ public class LoginActivity extends AppCompatActivity {
         Button registerButton = findViewById(R.id.registerButton);
         Button localLoginButton = findViewById(R.id.useLocalButton);
 
+        // set a click listener that starts the main activity after the user has logged in
         localLoginButton.setOnClickListener((view -> {
             ApiService apiService = ApiService.getInstance(this);
             apiService.setLocal(true);
@@ -79,6 +85,7 @@ class LoginClickListener implements View.OnClickListener {
                 passwordInput.getText().toString()
         );
 
+        // Logins, save the user token and start the main activity
         ApiService.getInstance(ctx).login(credentialsDto, (tk) -> {
             Log.i("LOGIN_ACTIVITY", "Logged in user with token " + tk.getAccessToken());
             TokensDaoService service = new TokensDaoService(ctx);

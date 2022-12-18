@@ -16,6 +16,9 @@ import java.time.Instant;
 import ch.disappointment.WalkoutCompanion.persistence.TracksDaoService;
 import ch.disappointment.WalkoutCompanion.persistence.model.Track;
 
+/**
+ * LocationListener implementation that is used to update the current position on the map
+ */
 public class MapLocationListener implements LocationListener {
     private ViewModelStoreOwner storeOwner;
     private Context context;
@@ -32,6 +35,7 @@ public class MapLocationListener implements LocationListener {
 
     @Override
     public void onLocationChanged(@NonNull Location location) {
+        // update the current position in the view model
         ViewModelProvider provider = new ViewModelProvider(storeOwner);
         MapViewModel viewModel = provider.get(MapViewModel.class);
         GeoPoint point = new GeoPoint(
@@ -39,6 +43,7 @@ public class MapLocationListener implements LocationListener {
                 location.getLongitude()
         );
 
+        // add the new point to the track and update the track in the database
         tracksDaoService.addPoint(context, trackId, Instant.now(), point);
         Track t = tracksDaoService.getTrack(context, trackId);
         viewModel.setTrack(t);

@@ -11,6 +11,9 @@ import ch.disappointment.WalkoutCompanion.persistence.model.User;
 
 import java.util.function.Consumer;
 
+/**
+ * SQLite storage for authentication Tokens
+ */
 public class TokensDaoService extends SQLiteOpenHelper {
 
     private static final int DATABASE_VERSION = 1;

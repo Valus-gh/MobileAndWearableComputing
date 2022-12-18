@@ -8,8 +8,7 @@ public enum NotificationChannels {
     NotificationChannels(String id){
         this.value = id;
     }
-
-
+    
     public String getValue() {
         return value;
     }

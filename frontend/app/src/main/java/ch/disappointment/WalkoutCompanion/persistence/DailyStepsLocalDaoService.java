@@ -14,6 +14,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+/**
+ * Implementation of DailyStepsDaoService to store data in a local SQLite DB
+ */
 public class DailyStepsLocalDaoService extends SQLiteOpenHelper implements DailyStepsDaoService<DailySteps> {
 
     private static final int DATABASE_VERSION = 1;

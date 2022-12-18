@@ -32,6 +32,9 @@ import ch.disappointment.WalkoutCompanion.persistence.TracksDaoService;
 import ch.disappointment.WalkoutCompanion.persistence.model.Track;
 import ch.disappointment.WalkoutCompanion.ui.map.MapActivity;
 
+/**
+ * Fragment that displays a list of tracks
+ */
 public class TracksFragment extends Fragment {
     private View root;
     private RecyclerView recyclerView;
@@ -48,13 +51,17 @@ public class TracksFragment extends Fragment {
 
         this.root = root;
 
+        // initialize the recycler view
         recyclerView = root.findViewById(R.id.tracksRecyclerView);
         recyclerView.setAdapter(new TracksAdapter(requireActivity()));
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
 
+        // initialize the floating action button
+        // set a click listener that opens a dialog to enter a name for the new track
         floatingActionButton = root.findViewById(R.id.tracks_fab);
         floatingActionButton.setOnClickListener(view -> {
             showDialog((trackName) -> {
+                // start the map activity to record the track
                 Intent mapIntent = new Intent(requireActivity(), MapActivity.class);
                 mapIntent.putExtra(MapActivity.EXTRA_KEY_TRACK_NAME, trackName);
                 mapIntent.putExtra(MapActivity.EXTRA_KEY_TRACK_ID, (String) null);
@@ -66,10 +73,12 @@ public class TracksFragment extends Fragment {
         ViewModelProvider provider = new ViewModelProvider(requireActivity());
         viewModel = provider.get(TracksViewModel.class);
 
+        // fetch the tracks from the database
         tracksDaoService = new TracksDaoService(requireContext());
         ArrayList<Track> trackList = tracksDaoService.listTracks(requireContext(), ApiService.getInstance(requireContext()).getLoggedUser().getUsername());
         viewModel.setTracks(trackList);
 
+        // observe the tracks in the view model, update the recycler view when they change
         viewModel.getTracks().observe(requireActivity(), tracks -> {
             recyclerView.getAdapter().notifyDataSetChanged();
         });
@@ -77,6 +86,9 @@ public class TracksFragment extends Fragment {
         return root;
     }
 
+    /**
+     * When the map activity returns, refresh the tracks list from the db
+     */
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -85,7 +97,12 @@ public class TracksFragment extends Fragment {
         viewModel.setTracks(trackList);
     }
 
-    private void showDialog(Consumer<String> onOk, Runnable okCancel) {
+    /**
+     * Show a dialog to enter a name for the new track
+     * @param onOk the callback to call when the user confirms the name
+     * @param onCancel the callback to call when the user cancels the dialog
+     */
+    private void showDialog(Consumer<String> onOk, Runnable onCancel) {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setTitle("Title");
 
@@ -100,8 +117,8 @@ public class TracksFragment extends Fragment {
 
         builder.setNegativeButton("Cancel", (dialog, which) -> {
             dialog.cancel();
-            if (okCancel != null)
-                okCancel.run();
+            if (onCancel != null)
+                onCancel.run();
         });
 
         builder.show();
@@ -109,7 +126,9 @@ public class TracksFragment extends Fragment {
 
 }
 
-
+/**
+ * Adapter for the recycler view that displays the tracks
+ */
 class TracksAdapter extends RecyclerView.Adapter<TracksAdapter.ViewHolder> {
 
     private final FragmentActivity activity;

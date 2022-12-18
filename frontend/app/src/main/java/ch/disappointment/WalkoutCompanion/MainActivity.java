@@ -69,6 +69,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
 
         bottomnav.setOnNavigationItemSelectedListener(this);
 
+        // default view to the home fragment
         getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new HomeFragment()).commit();
 
         // Ask for activity recognition permission
@@ -80,13 +81,17 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
             });
         }
 
+        // create a notification channel for the steps service
         createNotificationChannel();
-        // populateDB();
     }
 
+    /**
+     * When the user clicks on a menu item, the corresponding action is performed
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_logout) {
+            // logout the user and return to the login screen
             if (StepCountService.RUNNING)
                 StepCountService.stopStepCountingService(this);
 
@@ -99,6 +104,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
 
             return true;
         } else if(item.getItemId() == R.id.action_set_goal) {
+            // set the daily goal for the user
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Change goal");
             builder.setMessage("Insert your new goal:");
@@ -127,6 +133,9 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         return false;
     }
 
+    /**
+     * When the user clicks on a nav item, the corresponding fragment is displayed
+     */
     @SuppressLint("NonConstantResourceId")
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {

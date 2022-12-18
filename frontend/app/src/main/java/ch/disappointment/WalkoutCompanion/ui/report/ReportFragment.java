@@ -163,7 +163,7 @@ public class ReportFragment extends Fragment {
                         LocalDateTime d1 = LocalDate.parse(o1.getDate(), formatter).atStartOfDay();
                         LocalDateTime d2 = LocalDate.parse(o2.getDate(), formatter).atStartOfDay();
                         return d1.compareTo(d2);
-                    }).limit(30).collect(Collectors.toList());
+                    }).skip(res.size()-30).collect(Collectors.toList());
 
             manager.addSeries(ApiService.getInstance(getContext()).getLoggedUser().getUsername(), manager.getMappingString("x", "value"));
             manager.addSeries("Other Users Average", manager.getMappingString("x", "value2"));

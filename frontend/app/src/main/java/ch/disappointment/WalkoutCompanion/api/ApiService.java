@@ -26,6 +26,10 @@ import org.json.JSONObject;
 
 import java.util.function.Consumer;
 
+/**
+ * This class is used to communicate with the Walkout REST API.
+ * It uses Volley to manage http requests and avoid setting up request queues manually.
+ */
 public class ApiService {
     private static final String baseUrl = BuildConfig.API_URL;
     private static ApiService instance;

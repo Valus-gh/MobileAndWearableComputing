@@ -37,6 +37,17 @@ import ch.disappointment.WalkoutCompanion.persistence.TracksDaoService;
 import ch.disappointment.WalkoutCompanion.persistence.model.Track;
 
 
+/**
+ * Activity used to show a map.
+ * It can be opened in 2 modes:
+ *  view, just to show an already existing track,
+ *  new, upon open, the activity will start recording a new track
+ *
+ * Intent extras:
+ *  mode: OpenModes
+ *  track_name: [optional name of the track, required when mode == new]
+ *  track_id: [optional id of the track, required when mode == view]
+ */
 public class MapActivity extends AppCompatActivity {
     public enum OpenModes {
         VIEW, NEW
@@ -47,6 +58,7 @@ public class MapActivity extends AppCompatActivity {
     public static String EXTRA_KEY_TRACK_ID = "track_id";
 
     /* 2 secs */
+    // Interval for location updates
     private static long UPDATE_INTERVAL = 2 * 1000;
 
     private OpenModes mode;
@@ -56,6 +68,7 @@ public class MapActivity extends AppCompatActivity {
     private MapViewModel viewModel;
     private FusedLocationProviderClient locationProvider;
 
+    // OSMDroid: https://github.com/osmdroid/osmdroid
     private MapView map;
     private IMapController controller;
     private Polyline trackPolyline;
@@ -76,8 +89,10 @@ public class MapActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
 
+        // create a db connection
         tracksDaoService = new TracksDaoService(this);
 
+        // retrieve the open mod
         Intent intent = getIntent();
         mode = (OpenModes) intent.getSerializableExtra(EXTRA_KEY_MODE);
 
@@ -95,10 +110,12 @@ public class MapActivity extends AppCompatActivity {
         fab = (FloatingActionButton) findViewById(R.id.mapFab);
         switch (mode) {
             case NEW:
+                // retrieve track name
                 trackName = intent.getStringExtra(EXTRA_KEY_TRACK_NAME);
                 setupForTracking();
                 break;
             case VIEW:
+                // retrieve track id
                 trackId = intent.getLongExtra(EXTRA_KEY_TRACK_ID, -1);
                 setupForViewing();
         }
@@ -110,7 +127,7 @@ public class MapActivity extends AppCompatActivity {
 
             List<Track.TrackNode> points = track.getPoints();
 
-            // draw start marker
+            // draw track start marker
             if (trackStartMarker == null)
                 trackStartMarker = newMarker();
             trackStartMarker.setPosition(points.get(0).getPoint());
@@ -142,6 +159,10 @@ public class MapActivity extends AppCompatActivity {
         map.invalidate();
     }
 
+    /**
+     * Create a new marker with default settings
+     * @return the new marker
+     */
     private Marker newMarker() {
         Marker m = new Marker(map);
         m.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
@@ -149,23 +170,28 @@ public class MapActivity extends AppCompatActivity {
         return m;
     }
 
+    /**
+     * Create a new polyline with default settings
+     * @return the new polyline
+     */
     private Polyline newPolyline() {
         Polyline p = new Polyline();
         map.getOverlayManager().add(p);
         return p;
     }
 
+
     private void setupForTracking() {
+        // shows the FAB, since we are recording a new track we can stop it
         fab.show();
         fab.setOnClickListener(view -> {
             // navigate back to track list
             tryStopTracking(this::finish);
         });
 
-        controller.stopPanning();
-
         startTracking();
     }
+
 
     private void setupForViewing() {
         Track t = tracksDaoService.getTrack(this, trackId);
@@ -193,6 +219,10 @@ public class MapActivity extends AppCompatActivity {
         map.onPause();  //needed for compass, my location overlays, v6.0.0 and up
     }
 
+    /**
+     * Opens a dialog to confirm the user wants to stop tracking
+     * @param onOk callback to be called if the user confirms
+     */
     private void tryStopTracking(Runnable onOk) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Stop Tracking?");
@@ -210,6 +240,11 @@ public class MapActivity extends AppCompatActivity {
         builder.show();
     }
 
+    /**
+     * Starts tracking the user's movements
+     * MissingPermission is used because we check for permissions with a method,
+     * but IDEs don't know that
+     */
     @SuppressLint("MissingPermission")
     private void startTracking() {
         // create a new track in the db
@@ -244,6 +279,10 @@ public class MapActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * Prevents the user from leaving the activity while tracking,
+     * and asks for confirmation
+     */
     @Override
     public void onBackPressed() {
         if (mode == OpenModes.NEW) {
@@ -253,6 +292,10 @@ public class MapActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Checks if the user has granted the location permissions
+     * @return true if the user has granted the permissions, false otherwise
+     */
     private boolean checkLocationPermissions() {
         if (ActivityCompat.checkSelfPermission(
                 this,
