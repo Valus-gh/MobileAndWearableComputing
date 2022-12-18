@@ -104,10 +104,10 @@ public class TracksFragment extends Fragment {
      */
     private void showDialog(Consumer<String> onOk, Runnable onCancel) {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Title");
+        builder.setTitle("Track name");
 
         final EditText input = new EditText(requireContext());
-        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
 
         builder.setPositiveButton("OK", (dialog, which) -> {
