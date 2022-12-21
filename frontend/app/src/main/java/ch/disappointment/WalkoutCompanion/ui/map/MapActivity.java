@@ -81,7 +81,7 @@ public class MapActivity extends AppCompatActivity {
     private TracksDaoService tracksDaoService;
 
 
-    private static double defaultZoom = 18;
+    private static double defaultZoom = 17;
 
     @SuppressLint("MissingPermission")
     @Override
@@ -129,7 +129,7 @@ public class MapActivity extends AppCompatActivity {
 
             // draw track start marker
             if (trackStartMarker == null)
-                trackStartMarker = newMarker();
+                trackStartMarker = newMarker(true);
             trackStartMarker.setPosition(points.get(0).getPoint());
 
             if (points.size() > 1) {
@@ -145,7 +145,7 @@ public class MapActivity extends AppCompatActivity {
 
                 // draw end marker
                 if (trackEndMarker == null)
-                    trackEndMarker = newMarker();
+                    trackEndMarker = newMarker(false);
 
                 GeoPoint last = points.get(points.size() - 1).getPoint();
 
@@ -163,8 +163,9 @@ public class MapActivity extends AppCompatActivity {
      * Create a new marker with default settings
      * @return the new marker
      */
-    private Marker newMarker() {
+    private Marker newMarker(boolean start) {
         Marker m = new Marker(map);
+        m.setTitle(start ? "Start" : "End");
         m.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
         map.getOverlayManager().add(m);
         return m;
@@ -260,14 +261,6 @@ public class MapActivity extends AppCompatActivity {
         if (checkLocationPermissions()) {
             locationProvider = LocationServices.getFusedLocationProviderClient(this);
             locationListener = new MapLocationListener(this, this, t.getId());
-            locationProvider.getLastLocation().addOnSuccessListener(location -> {
-                if (location != null)
-                    tracksDaoService.addPoint(this,
-                            t.getId(),
-                            Instant.now(),
-                            new GeoPoint(location.getLatitude(), location.getLongitude())
-                    );
-            });
             locationProvider.requestLocationUpdates(
                     new LocationRequest
                             .Builder(Priority.PRIORITY_HIGH_ACCURACY, UPDATE_INTERVAL)
